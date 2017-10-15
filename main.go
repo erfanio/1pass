@@ -1,10 +1,12 @@
 package main
 
 func main() {
-	initGui()
+	main := initGui()
+	main.window.Show()
 
-	// make the window visible
-	window.Show()
+	login := initLogin()
+	login.window.Show()
+
 	// start the app
-	app.Exec()
+	main.app.Exec()
 }

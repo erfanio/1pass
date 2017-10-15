@@ -45,7 +45,7 @@ const (
 	RESULT_HEIGHT   = 50
 )
 
-var (
+type mainWidgets struct {
 	app          *widgets.QApplication
 	window       *widgets.QWidget
 	windowLayout *widgets.QVBoxLayout
@@ -54,16 +54,24 @@ var (
 	input        *widgets.QLineEdit
 	item         *widgets.QStyledItemDelegate
 	list         *widgets.QListWidget
-)
+}
 
-func initGui() {
+type loginWidgets struct {
+	window   *widgets.QWidget
+	layout   *widgets.QVBoxLayout
+	key      *widgets.QLineEdit
+	password *widgets.QLineEdit
+	button   *widgets.QPushButton
+}
+
+func initGui() mainWidgets {
 	fmt.Println("hi")
 	// new app
-	app = widgets.NewQApplication(len(os.Args), os.Args)
+	app := widgets.NewQApplication(len(os.Args), os.Args)
 	app.SetStyleSheet(stylesheet)
 
 	// main window is floating
-	window = widgets.NewQWidget(nil, core.Qt__Tool|
+	window := widgets.NewQWidget(nil, core.Qt__Tool|
 		core.Qt__FramelessWindowHint|
 		core.Qt__WindowCloseButtonHint|
 		core.Qt__WindowStaysOnTopHint)
@@ -73,31 +81,31 @@ func initGui() {
 	window.SetAttribute(core.Qt__WA_TranslucentBackground, true)
 
 	// window is layed out vertically
-	windowLayout = widgets.NewQVBoxLayout()
+	windowLayout := widgets.NewQVBoxLayout()
 	windowLayout.SetContentsMargins(0, 0, 0, 0)
 	window.SetLayout(windowLayout)
 
 	// add a inner window widget (since window is completely transparent this is needed for the border)
-	innerWindow = widgets.NewQFrame(nil, 0)
+	innerWindow := widgets.NewQFrame(nil, 0)
 	innerWindow.SetObjectName("innerWindow")
 	windowLayout.AddWidget(innerWindow, 0, 0)
 
 	// inner window is layed vertically
-	layout = widgets.NewQVBoxLayout()
+	layout := widgets.NewQVBoxLayout()
 	layout.SetContentsMargins(0, 0, 0, 0)
 	innerWindow.SetLayout(layout)
 
 	// LineEdit for the search query
-	input = widgets.NewQLineEdit(nil)
+	input := widgets.NewQLineEdit(nil)
 	input.SetObjectName("input")
 	input.SetFixedHeight(EDITLINE_HEIGHT)
 	layout.AddWidget(input, 0, 0)
 
 	// items in the list of logins
-	item = widgets.NewQStyledItemDelegate(nil)
+	item := widgets.NewQStyledItemDelegate(nil)
 
 	// list of logins
-	list = widgets.NewQListWidget(nil)
+	list := widgets.NewQListWidget(nil)
 	list.SetObjectName("list")
 	// expands horizontally but sticks to size hint vertically
 	list.SetSizePolicy2(widgets.QSizePolicy__Expanding, widgets.QSizePolicy__Fixed)
@@ -165,4 +173,43 @@ func initGui() {
 		// only care about setting the correct height
 		return core.NewQSize2(list.SizeHintDefault().Width(), RESULT_HEIGHT*count)
 	})
+
+	return mainWidgets{
+		app,
+		window,
+		windowLayout,
+		innerWindow,
+		layout,
+		input,
+		item,
+		list,
+	}
+}
+
+func initLogin() loginWidgets {
+	window := widgets.NewQWidget(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
+	window.SetWindowTitle("Session expired! Login again")
+
+	layout := widgets.NewQVBoxLayout()
+	window.SetLayout(layout)
+
+	key := widgets.NewQLineEdit(nil)
+	key.SetPlaceholderText("Secret Key")
+	layout.AddWidget(key, 0, 0)
+
+	password := widgets.NewQLineEdit(nil)
+	password.SetPlaceholderText("Password")
+	password.SetEchoMode(widgets.QLineEdit__Password)
+	layout.AddWidget(password, 0, 0)
+
+	button := widgets.NewQPushButton2("Login", nil)
+	layout.AddWidget(button, 0, 0)
+
+	return loginWidgets{
+		window,
+		layout,
+		key,
+		password,
+		button,
+	}
 }
