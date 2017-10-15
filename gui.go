@@ -57,7 +57,7 @@ type mainWidgets struct {
 }
 
 type loginWidgets struct {
-	window   *widgets.QWidget
+	window   *widgets.QDialog
 	layout   *widgets.QVBoxLayout
 	key      *widgets.QLineEdit
 	password *widgets.QLineEdit
@@ -186,24 +186,39 @@ func initGui() mainWidgets {
 	}
 }
 
-func initLogin() loginWidgets {
-	window := widgets.NewQWidget(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
-	window.SetWindowTitle("Session expired! Login again")
+func initLogin(onSubmit func(string, string)) loginWidgets {
+	// login is triggered by clicking enter on inputs
+	// window needs to be a dialog for this work
+	window := widgets.NewQDialog(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
+	window.SetWindowTitle("Login")
 
+	// vertical layout
 	layout := widgets.NewQVBoxLayout()
 	window.SetLayout(layout)
 
+	// add the form (inputs and a button)
 	key := widgets.NewQLineEdit(nil)
 	key.SetPlaceholderText("Secret Key")
 	layout.AddWidget(key, 0, 0)
 
 	password := widgets.NewQLineEdit(nil)
 	password.SetPlaceholderText("Password")
+	// don't show the password
 	password.SetEchoMode(widgets.QLineEdit__Password)
 	layout.AddWidget(password, 0, 0)
 
 	button := widgets.NewQPushButton2("Login", nil)
+	button.SetDefault(true)
 	layout.AddWidget(button, 0, 0)
+
+	// callback on click
+	button.ConnectClicked(func(checked bool) {
+		keyText := key.Text()
+		passwordText := password.Text()
+
+		onSubmit(keyText, passwordText)
+		window.Hide()
+	})
 
 	return loginWidgets{
 		window,
