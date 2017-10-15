@@ -1,42 +1,12 @@
-package main
+package frontend
 
 import (
 	"fmt"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
-	"os"
 	"strconv"
 )
-
-const stylesheet = `
-* {
-  background-color: #EEEEEE;
-}
-
-#innerWindow {
-  padding: 5px;
-  border-radius: 5px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #E0E0E0;
-}
-
-#input {
-  font-size: 28px;
-  background-color: #fff;
-  border-radius: 2px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: #E0E0E0;
-}
-
-#list {
-  border: none;
-  selection-background-color: #40C4FF;
-  selection-color: #000;
-}
-`
 
 const (
 	APP_NAME        = "1Password Lookup"
@@ -45,8 +15,7 @@ const (
 	RESULT_HEIGHT   = 50
 )
 
-type mainWidgets struct {
-	app          *widgets.QApplication
+type Search struct {
 	window       *widgets.QWidget
 	windowLayout *widgets.QVBoxLayout
 	innerWindow  *widgets.QFrame
@@ -56,19 +25,8 @@ type mainWidgets struct {
 	list         *widgets.QListWidget
 }
 
-type loginWidgets struct {
-	window   *widgets.QDialog
-	layout   *widgets.QVBoxLayout
-	key      *widgets.QLineEdit
-	password *widgets.QLineEdit
-	button   *widgets.QPushButton
-}
-
-func initGui() mainWidgets {
+func NewSearch() Search {
 	fmt.Println("hi")
-	// new app
-	app := widgets.NewQApplication(len(os.Args), os.Args)
-	app.SetStyleSheet(stylesheet)
 
 	// main window is floating
 	window := widgets.NewQWidget(nil, core.Qt__Tool|
@@ -118,7 +76,7 @@ func initGui() mainWidgets {
 	// exit on esc
 	input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
 		if event.Key() == int(core.Qt__Key_Escape) {
-			app.Quit()
+      CloseGui()
 		} else {
 			input.KeyPressEventDefault(event)
 		}
@@ -184,8 +142,7 @@ func initGui() mainWidgets {
 		window.Move2(event.GlobalX()-xOffset, event.GlobalY()-yOffset)
 	})
 
-	return mainWidgets{
-		app,
+	return Search{
 		window,
 		windowLayout,
 		innerWindow,
@@ -196,45 +153,7 @@ func initGui() mainWidgets {
 	}
 }
 
-func initLogin(onSubmit func(string, string)) loginWidgets {
-	// login is triggered by clicking enter on inputs
-	// window needs to be a dialog for this work
-	window := widgets.NewQDialog(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
-	window.SetWindowTitle("Login")
-
-	// vertical layout
-	layout := widgets.NewQVBoxLayout()
-	window.SetLayout(layout)
-
-	// add the form (inputs and a button)
-	key := widgets.NewQLineEdit(nil)
-	key.SetPlaceholderText("Secret Key")
-	layout.AddWidget(key, 0, 0)
-
-	password := widgets.NewQLineEdit(nil)
-	password.SetPlaceholderText("Password")
-	// don't show the password
-	password.SetEchoMode(widgets.QLineEdit__Password)
-	layout.AddWidget(password, 0, 0)
-
-	button := widgets.NewQPushButton2("Login", nil)
-	button.SetDefault(true)
-	layout.AddWidget(button, 0, 0)
-
-	// callback on click
-	button.ConnectClicked(func(checked bool) {
-		keyText := key.Text()
-		passwordText := password.Text()
-
-		onSubmit(keyText, passwordText)
-		window.Hide()
-	})
-
-	return loginWidgets{
-		window,
-		layout,
-		key,
-		password,
-		button,
-	}
+func (s *Search) Show() {
+  s.window.Show()
 }
+
