@@ -174,6 +174,16 @@ func initGui() mainWidgets {
 		return core.NewQSize2(list.SizeHintDefault().Width(), RESULT_HEIGHT*count)
 	})
 
+	// make window draggable
+	var xOffset, yOffset int
+	window.ConnectMousePressEvent(func(event *gui.QMouseEvent) {
+		xOffset = event.X()
+		yOffset = event.Y()
+	})
+	window.ConnectMouseMoveEvent(func(event *gui.QMouseEvent) {
+		window.Move2(event.GlobalX()-xOffset, event.GlobalY()-yOffset)
+	})
+
 	return mainWidgets{
 		app,
 		window,
