@@ -46,10 +46,24 @@ func NewLogin() Login {
 	button.SetDefault(true)
 	layout.AddRow5(button)
 
-  // close the app if login is rejected (esc key)
-  window.ConnectRejected(func() {
-    CloseGui()
-  })
+	// focus on first empty input
+	window.ConnectShowEvent(func(event *gui.QShowEvent) {
+		// a list of inputs in order
+		inputs := []*widgets.QLineEdit{domain, email, key, password}
+
+		for i := range inputs {
+			input := inputs[i]
+			if input.Text() == "" {
+				input.SetFocus(core.Qt__NoFocusReason)
+				return
+			}
+		}
+	})
+
+	// close the app if login is rejected (esc key)
+	window.ConnectRejected(func() {
+		CloseGui()
+	})
 
 	// callback on click
 	return Login{
@@ -102,7 +116,7 @@ func (l *Login) StartWait() {
 	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
 	l.window.SetCursor(cursor)
 	l.button.SetDisabled(true)
-  // this is necessary to process this event instantly
+	// this is necessary to process this event instantly
 	app.ProcessEvents(core.QEventLoop__AllEvents)
 }
 
@@ -110,6 +124,6 @@ func (l *Login) EndWait() {
 	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
 	l.window.SetCursor(cursor)
 	l.button.SetDisabled(false)
-  // this is necessary to process this event instantly
+	// this is necessary to process this event instantly
 	app.ProcessEvents(core.QEventLoop__AllEvents)
 }
