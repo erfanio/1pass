@@ -76,7 +76,7 @@ func NewSearch() Search {
 	// exit on esc
 	input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
 		if event.Key() == int(core.Qt__Key_Escape) {
-      CloseGui()
+			CloseGui()
 		} else {
 			input.KeyPressEventDefault(event)
 		}
@@ -154,6 +154,5 @@ func NewSearch() Search {
 }
 
 func (s *Search) Show() {
-  s.window.Show()
+	s.window.Show()
 }
-

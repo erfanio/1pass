@@ -43,9 +43,15 @@ func InitGui() {
 }
 
 func StartGui() {
-  app.Exec()
+	app.Exec()
 }
 
 func CloseGui() {
-  app.Quit()
+	app.Quit()
+}
+
+func ShowError(msg string) {
+	errorDialog := widgets.NewQErrorMessage(nil)
+	errorDialog.ShowMessage(msg)
+	errorDialog.Exec()
 }

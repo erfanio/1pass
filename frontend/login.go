@@ -2,12 +2,15 @@ package frontend
 
 import (
 	"github.com/therecipe/qt/core"
+	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
 )
 
 type Login struct {
 	window   *widgets.QDialog
-	layout   *widgets.QVBoxLayout
+	layout   *widgets.QFormLayout
+	domain   *widgets.QLineEdit
+	email    *widgets.QLineEdit
 	key      *widgets.QLineEdit
 	password *widgets.QLineEdit
 	button   *widgets.QPushButton
@@ -20,47 +23,93 @@ func NewLogin() Login {
 	window.SetWindowTitle("Login")
 
 	// vertical layout
-	layout := widgets.NewQVBoxLayout()
+	layout := widgets.NewQFormLayout(nil)
 	window.SetLayout(layout)
 
 	// add the form (inputs and a button)
+	domain := widgets.NewQLineEdit(nil)
+	domain.SetText("my.1password.com")
+	layout.AddRow3("Domain", domain)
+
+	email := widgets.NewQLineEdit(nil)
+	layout.AddRow3("Email", email)
+
 	key := widgets.NewQLineEdit(nil)
-	key.SetPlaceholderText("Secret Key")
-	layout.AddWidget(key, 0, 0)
+	layout.AddRow3("Secret Key", key)
 
 	password := widgets.NewQLineEdit(nil)
-	password.SetPlaceholderText("Password")
 	// don't show the password
 	password.SetEchoMode(widgets.QLineEdit__Password)
-	layout.AddWidget(password, 0, 0)
+	layout.AddRow3("Master Password", password)
 
-	button := widgets.NewQPushButton2("Login", nil)
+	button := widgets.NewQPushButton2("Sign In", nil)
 	button.SetDefault(true)
-	layout.AddWidget(button, 0, 0)
+	layout.AddRow5(button)
+
+  // close the app if login is rejected (esc key)
+  window.ConnectRejected(func() {
+    CloseGui()
+  })
 
 	// callback on click
 	return Login{
 		window,
 		layout,
+		domain,
+		email,
 		key,
 		password,
 		button,
 	}
 }
 
-func (l *Login) OnSubmit(onSubmit func(string, string)) {
+func (l *Login) OnSubmit(onSubmit func(string, string, string, string)) {
 	l.button.ConnectClicked(func(checked bool) {
+		domainText := l.domain.Text()
+		emailText := l.email.Text()
 		keyText := l.key.Text()
 		passwordText := l.password.Text()
 
-		onSubmit(keyText, passwordText)
+		onSubmit(domainText, emailText, keyText, passwordText)
 	})
 }
 
 func (l *Login) Show() {
-  l.window.Show()
+	l.window.Show()
 }
 
 func (l *Login) Hide() {
-  l.window.Hide()
+	l.window.Hide()
+}
+
+func (l *Login) SetDomain(text string) {
+	l.domain.SetText(text)
+}
+
+func (l *Login) SetEmail(text string) {
+	l.email.SetText(text)
+}
+
+func (l *Login) SetKey(text string) {
+	l.key.SetText(text)
+}
+
+func (l *Login) SetPassword(text string) {
+	l.password.SetText(text)
+}
+
+func (l *Login) StartWait() {
+	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
+	l.window.SetCursor(cursor)
+	l.button.SetDisabled(true)
+  // this is necessary to process this event instantly
+	app.ProcessEvents(core.QEventLoop__AllEvents)
+}
+
+func (l *Login) EndWait() {
+	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
+	l.window.SetCursor(cursor)
+	l.button.SetDisabled(false)
+  // this is necessary to process this event instantly
+	app.ProcessEvents(core.QEventLoop__AllEvents)
 }
