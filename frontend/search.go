@@ -156,3 +156,7 @@ func NewSearch() Search {
 func (s *Search) Show() {
 	s.window.Show()
 }
+
+func (s *Search) Hide() {
+	s.window.Hide()
+}
