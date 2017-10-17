@@ -98,6 +98,9 @@ func initLogin() {
 		// remember the session key
 		session := strings.TrimSpace(string(out))
 		settings.SetValue("session_key", core.NewQVariant17(session))
+
+		// get items list
+		getList()
 	})
 
 	login.Show()
