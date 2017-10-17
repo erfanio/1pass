@@ -77,14 +77,14 @@ func NewLogin() Login {
 	}
 }
 
-func (l *Login) OnSubmit(onSubmit func(string, string, string, string)) {
+func (l *Login) OnSubmit(listener func(string, string, string, string)) {
 	l.button.ConnectClicked(func(checked bool) {
 		domainText := l.domain.Text()
 		emailText := l.email.Text()
 		keyText := l.key.Text()
 		passwordText := l.password.Text()
 
-		onSubmit(domainText, emailText, keyText, passwordText)
+		listener(domainText, emailText, keyText, passwordText)
 	})
 }
 

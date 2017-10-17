@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/erfanio/1pass/frontend"
 	"github.com/therecipe/qt/core"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -48,14 +49,16 @@ func getList() {
 	if err != nil {
 		exitErr, ok := err.(*exec.ExitError)
 		if ok {
-			fmt.Println(err.Error())
-			fmt.Println(string(exitErr.Stderr))
+			log.Print(err, string(exitErr.Stderr))
+		} else {
+			log.Print(err)
 		}
 		initLogin()
 		return
 	}
 
-	fmt.Println(string(out))
+	setupListData(out)
+	initList()
 }
 
 func initLogin() {
@@ -86,7 +89,10 @@ func initLogin() {
 			msg := "Login failed! "
 			exitErr, ok := err.(*exec.ExitError)
 			if ok {
+				log.Print(err, string(exitErr.Stderr))
 				msg += string(exitErr.Stderr)
+			} else {
+				log.Print(err)
 			}
 			frontend.ShowError(msg)
 			return

@@ -5,7 +5,6 @@ import (
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
-	"strconv"
 )
 
 const (
@@ -82,32 +81,6 @@ func NewSearch() Search {
 		}
 	})
 
-	// handle text change
-	input.ConnectTextChanged(func(text string) {
-		items := make([]string, len(text))
-		// fake items for now
-		for i := 0; i < len(text); i++ {
-			items = append(items, strconv.Itoa(i)+" "+text[:i+1])
-		}
-
-		// replace the list with current items (or hide it if empty)
-		list.Clear()
-		if len(items) > 0 {
-			list.Show()
-			list.AddItems(items)
-			list.UpdateGeometry()
-		} else {
-			list.Hide()
-		}
-
-		// update the size of the parents
-		parent := list.ParentWidget()
-		for parent != nil {
-			parent.AdjustSize()
-			parent = parent.ParentWidget()
-		}
-	})
-
 	// size of the list items
 	item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
 		// only care about setting the correct height
@@ -159,4 +132,29 @@ func (s *Search) Show() {
 
 func (s *Search) Hide() {
 	s.window.Hide()
+}
+
+func (s *Search) OnTextChanged(listener func(string)) {
+	s.input.ConnectTextChanged(func(text string) {
+		listener(text)
+	})
+}
+
+func (s *Search) ReplaceList(items []string) {
+	// clear list and add new items (or hide list if empty)
+	s.list.Clear()
+	if len(items) > 0 {
+		s.list.Show()
+		s.list.AddItems(items)
+		s.list.UpdateGeometry()
+	} else {
+		s.list.Hide()
+	}
+
+	// update the size of the parents
+	parent := s.list.ParentWidget()
+	for parent != nil {
+		parent.AdjustSize()
+		parent = parent.ParentWidget()
+	}
 }
