@@ -21,20 +21,22 @@ type overview struct {
 var (
 	items         []partial
 	filteredItems []partial
-	model         *core.QStringListModel
+	model         *core.QAbstractListModel
 )
 
 func initList() {
 	// setup model
-	model = core.NewQStringListModel2([]string{}, nil)
+	initModel()
 	search.SetListModel(model)
 
 	search.OnTextChanged(func(text string) {
 		// search list for lower case input text
 		target := strings.ToLower(text)
 
+		// data is changing
+		model.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
+
 		// two lists, one for full object and one of strings that goes to gui
-		stringItems := make([]string, 0, len(items))
 		filteredItems = make([]partial, 0, len(items))
 
 		for _, item := range items {
@@ -44,14 +46,41 @@ func initList() {
 			ainfo := strings.ToLower(item.Overview.AdditionalInfo)
 
 			if strings.Contains(title, target) || strings.Contains(url, target) || strings.Contains(ainfo, target) {
-				stringItems = append(stringItems, title)
 				filteredItems = append(filteredItems, item)
 			}
 		}
 
-		// put found items in the gui list
-		model.SetStringList(stringItems)
+		// data was changed
+		model.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 		search.UpdateSize()
+	})
+}
+
+func initModel() {
+	// create a new model and connect necessary functions
+	// model uses filteredItems as data source
+	model = core.NewQAbstractListModel(nil)
+	// flags
+	model.ConnectFlags(func(index *core.QModelIndex) core.Qt__ItemFlag {
+		return core.Qt__ItemIsSelectable | core.Qt__ItemIsEnabled
+	})
+	// data
+	model.ConnectData(func(index *core.QModelIndex, role int) *core.QVariant {
+		row := index.Row()
+		// out of range
+		if row >= len(filteredItems) {
+			return core.NewQVariant()
+		}
+
+		item := filteredItems[row]
+		if role == int(core.Qt__DisplayRole) {
+			return core.NewQVariant17(item.Overview.Title)
+		}
+		return core.NewQVariant()
+	})
+	// count
+	model.ConnectRowCount(func(parent *core.QModelIndex) int {
+		return len(filteredItems)
 	})
 }
 
