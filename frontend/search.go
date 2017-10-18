@@ -58,19 +58,18 @@ func NewSearch() Search {
 	input.SetFixedHeight(EDITLINE_HEIGHT)
 	layout.AddWidget(input, 0, 0)
 
-	// items in the list of logins
-	item := widgets.NewQStyledItemDelegate(nil)
-
 	// list of logins
 	list := widgets.NewQListView(nil)
 	list.SetObjectName("list")
 	// expands horizontally but sticks to size hint vertically
 	list.SetSizePolicy2(widgets.QSizePolicy__Expanding, widgets.QSizePolicy__Fixed)
-
-	// set the list items
-	list.SetItemDelegate(item)
 	// hidden by default (shown as soon as something appears inside)
 	list.Hide()
+
+	// items in the list of logins
+	item := widgets.NewQStyledItemDelegate(nil)
+	// set the list items
+	list.SetItemDelegate(item)
 	layout.AddWidget(list, 0, 0)
 
 	// exit on esc
@@ -144,6 +143,34 @@ func (s *Search) OnTextChanged(listener func(string)) {
 	s.input.ConnectTextChanged(func(text string) {
 		listener(text)
 	})
+}
+
+func (s *Search) ContextMenuData(listener func(int) map[string]string) {
+	// send a listener the
+	s.list.ConnectContextMenuEvent(func(event *gui.QContextMenuEvent) {
+		// get data
+		selected := s.list.SelectedIndexes()[0].Row()
+		data := listener(selected)
+
+		// each data item is a copy action
+		actions := make([]*widgets.QAction, 0)
+		for key, value := range data {
+			action := createCopyAction(key, value)
+			actions = append(actions, action)
+		}
+
+		menu := widgets.NewQMenu(nil)
+		menu.Exec3(actions, event.GlobalPos(), actions[0], s.list)
+	})
+}
+
+func createCopyAction(key, value string) *widgets.QAction {
+	label := fmt.Sprintf("Copy %v", key)
+	action := widgets.NewQAction2(label, nil)
+	action.ConnectTriggered(func(checked bool) {
+		fmt.Println("Copy to clipboard", value)
+	})
+	return action
 }
 
 func (s *Search) SetListModel(model core.QAbstractItemModel_ITF) {

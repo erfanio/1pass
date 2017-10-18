@@ -60,6 +60,15 @@ func initList() {
 		model.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 		search.UpdateSize()
 	})
+
+	search.ContextMenuData(func(row int) map[string]string {
+		item := filteredItems[row]
+		return map[string]string{
+			"username": "hello",
+			"password": "hi",
+			"url":      item.Overview.Url,
+		}
+	})
 }
 
 func initModel() {
