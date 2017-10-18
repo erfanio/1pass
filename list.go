@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/therecipe/qt/core"
 	"log"
 	"strings"
 )
@@ -20,9 +21,14 @@ type overview struct {
 var (
 	items         []partial
 	filteredItems []partial
+	model         *core.QStringListModel
 )
 
 func initList() {
+	// setup model
+	model = core.NewQStringListModel2([]string{}, nil)
+	search.SetListModel(model)
+
 	search.OnTextChanged(func(text string) {
 		// search list for lower case input text
 		target := strings.ToLower(text)
@@ -32,18 +38,20 @@ func initList() {
 		filteredItems = make([]partial, 0, len(items))
 
 		for _, item := range items {
-			// search in title and url
+			// search in title, url and additional info
 			title := strings.ToLower(item.Overview.Title)
 			url := strings.ToLower(item.Overview.Url)
+			ainfo := strings.ToLower(item.Overview.AdditionalInfo)
 
-			if strings.Contains(title, target) || strings.Contains(url, target) {
+			if strings.Contains(title, target) || strings.Contains(url, target) || strings.Contains(ainfo, target) {
 				stringItems = append(stringItems, title)
 				filteredItems = append(filteredItems, item)
 			}
 		}
 
 		// put found items in the gui list
-		search.ReplaceList(stringItems)
+		model.SetStringList(stringItems)
+		search.UpdateSize()
 	})
 }
 

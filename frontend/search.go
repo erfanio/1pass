@@ -21,7 +21,7 @@ type Search struct {
 	layout       *widgets.QVBoxLayout
 	input        *widgets.QLineEdit
 	item         *widgets.QStyledItemDelegate
-	list         *widgets.QListWidget
+	list         *widgets.QListView
 }
 
 func NewSearch() Search {
@@ -62,10 +62,11 @@ func NewSearch() Search {
 	item := widgets.NewQStyledItemDelegate(nil)
 
 	// list of logins
-	list := widgets.NewQListWidget(nil)
+	list := widgets.NewQListView(nil)
 	list.SetObjectName("list")
 	// expands horizontally but sticks to size hint vertically
 	list.SetSizePolicy2(widgets.QSizePolicy__Expanding, widgets.QSizePolicy__Fixed)
+
 	// set the list items
 	list.SetItemDelegate(item)
 	// hidden by default (shown as soon as something appears inside)
@@ -97,7 +98,7 @@ func NewSearch() Search {
 		if rowSize < 0 {
 			rowSize = 0
 		}
-		count := list.Count()
+		count := list.Model().RowCount(core.NewQModelIndex())
 		if count > 5 {
 			count = 5
 		}
@@ -140,12 +141,15 @@ func (s *Search) OnTextChanged(listener func(string)) {
 	})
 }
 
-func (s *Search) ReplaceList(items []string) {
-	// clear list and add new items (or hide list if empty)
-	s.list.Clear()
-	if len(items) > 0 {
+func (s *Search) SetListModel(model core.QAbstractItemModel_ITF) {
+	s.list.SetModel(model)
+}
+
+func (s *Search) UpdateSize() {
+	count := s.list.Model().RowCount(core.NewQModelIndex())
+	// hide if empty
+	if count > 0 {
 		s.list.Show()
-		s.list.AddItems(items)
 		s.list.UpdateGeometry()
 	} else {
 		s.list.Hide()
