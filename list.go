@@ -30,6 +30,12 @@ func initList() {
 	search.SetListModel(model)
 
 	search.OnTextChanged(func(text string) {
+		// don't bother filtering if text is empty, just hide the list
+		if text == "" {
+			search.HideList()
+			return
+		}
+
 		// search list for lower case input text
 		target := strings.ToLower(text)
 

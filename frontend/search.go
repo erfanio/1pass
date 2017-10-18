@@ -135,6 +135,11 @@ func (s *Search) Hide() {
 	s.window.Hide()
 }
 
+func (s *Search) HideList() {
+	s.list.Hide()
+	s.updateParentSize()
+}
+
 func (s *Search) OnTextChanged(listener func(string)) {
 	s.input.ConnectTextChanged(func(text string) {
 		listener(text)
@@ -155,7 +160,10 @@ func (s *Search) UpdateSize() {
 		s.list.Hide()
 	}
 
-	// update the size of the parents
+	s.updateParentSize()
+}
+
+func (s *Search) updateParentSize() {
 	parent := s.list.ParentWidget()
 	for parent != nil {
 		parent.AdjustSize()
