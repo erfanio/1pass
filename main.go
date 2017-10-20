@@ -5,7 +5,6 @@ import (
 	"github.com/erfanio/1pass/frontend"
 	"github.com/therecipe/qt/core"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -25,40 +24,11 @@ func main() {
 	search = frontend.NewSearch()
 	search.Show()
 
-	// get the list of items (if fails, will prompt login)
-	getList()
+	// get items list and setup its gui (if fails, will prompt login)
+	giveListSession()
 
 	// start app
 	frontend.StartGui()
-}
-
-func getList() {
-	// get items from op using the session key
-	domain := settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString()
-	session_key := settings.Value("session_key", core.NewQVariant17("")).ToString()
-
-	subdomain := strings.Split(domain, ".")[0]
-	// e.g. OP_SESSION_my=abcdefg
-	session_env := fmt.Sprintf("OP_SESSION_%v=%v", subdomain, session_key)
-
-	cmd := exec.Command("/bin/op", "list", "items")
-	cmd.Env = append(os.Environ(), session_env)
-	out, err := cmd.Output()
-
-	// login if list couldn't be fetched
-	if err != nil {
-		exitErr, ok := err.(*exec.ExitError)
-		if ok {
-			log.Print(err, string(exitErr.Stderr))
-		} else {
-			log.Print(err)
-		}
-		initLogin()
-		return
-	}
-
-	setupListData(out)
-	initList()
 }
 
 func initLogin() {
@@ -105,9 +75,22 @@ func initLogin() {
 		session := strings.TrimSpace(string(out))
 		settings.SetValue("session_key", core.NewQVariant17(session))
 
-		// get items list
-		getList()
+		// get items list and setup its gui
+		giveListSession()
 	})
 
 	login.Show()
+}
+
+func giveListSession() {
+	// get logged in session env
+	domain := settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString()
+	sessionKey := settings.Value("session_key", core.NewQVariant17("")).ToString()
+
+	subdomain := strings.Split(domain, ".")[0]
+	// e.g. OP_SESSION_my=abcdefg
+	sessionEnv := fmt.Sprintf("OP_SESSION_%v=%v", subdomain, sessionKey)
+
+	// list will need session env to fetch the list from op
+	initList(sessionEnv)
 }

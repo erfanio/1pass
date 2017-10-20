@@ -4,12 +4,22 @@ import (
 	"encoding/json"
 	"github.com/therecipe/qt/core"
 	"log"
+	"os"
+	"os/exec"
 	"strings"
 )
 
-type partial struct {
-	Uuid     string   `json:"uuid"`
-	Overview overview `json:"overview"`
+type partialItem struct {
+	Uuid         string   `json:"uuid"`
+	TemplateUuid string   `json:"templateUuid"`
+	Overview     overview `json:"overview"`
+}
+
+type completeItem struct {
+	Uuid         string   `json:"uuid"`
+	TemplateUuid string   `json:"templateUuid"`
+	Overview     overview `json:"overview"`
+	Details      details  `json:"details"`
 }
 
 type overview struct {
@@ -18,15 +28,62 @@ type overview struct {
 	Url            string `json:"url"`
 }
 
+type details struct {
+	Fields   []field   `json:"fields"`
+	Notes    string    `json:"notesPlain"`
+	Sections []section `json:"sections"`
+}
+
+type field struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type section struct {
+	Name   string         `json:"name"`
+	Title  string         `json:"title"`
+	Fields []sectionField `json:"fields"`
+}
+
+type sectionField struct {
+	Name  string `json:"n"`
+	Title string `json:"t"`
+	Value string `json:"v"`
+}
+
 var (
-	items         []partial
-	filteredItems []partial
+	items         []partialItem
+	filteredItems []partialItem
 	model         *core.QAbstractListModel
 )
 
-func initList() {
+func initList(sessionEnv string) {
+	// get items from op
+	cmd := exec.Command("/bin/op", "list", "items")
+	cmd.Env = append(os.Environ(), sessionEnv)
+	out, err := cmd.Output()
+
+	// login if list couldn't be fetched
+	if err != nil {
+		logExit(err)
+		initLogin()
+		return
+	}
+
+	// update items from json data
+	items = nil
+	err = json.Unmarshal(out, &items)
+	if err != nil {
+		// crash
+		log.Fatal(err)
+	}
+
+	initListGui(sessionEnv)
+}
+
+func initListGui(sessionEnv string) {
 	// setup model
-	initModel()
+	initListModel()
 	search.SetListModel(model)
 
 	search.OnTextChanged(func(text string) {
@@ -43,7 +100,7 @@ func initList() {
 		model.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 
 		// two lists, one for full object and one of strings that goes to gui
-		filteredItems = make([]partial, 0, len(items))
+		filteredItems = make([]partialItem, 0, len(items))
 
 		for _, item := range items {
 			// search in title, url and additional info
@@ -62,16 +119,52 @@ func initList() {
 	})
 
 	search.ContextMenuData(func(row int) map[string]string {
-		item := filteredItems[row]
-		return map[string]string{
-			"username": "hello",
-			"password": "hi",
-			"url":      item.Overview.Url,
+		// get items from op
+		cmd := exec.Command("/bin/op", "get", "item", filteredItems[row].Uuid)
+		cmd.Env = append(os.Environ(), sessionEnv)
+		out, err := cmd.Output()
+
+		// login if list couldn't be fetched
+		if err != nil {
+			logExit(err)
+			initLogin()
+			return nil
 		}
+
+		// get item
+		var item completeItem
+		err = json.Unmarshal(out, &item)
+		if err != nil {
+			// crash
+			log.Fatal(err)
+		}
+
+		// basic info +
+		results := map[string]string{
+			"notes": item.Details.Notes,
+			"url":   item.Overview.Url,
+			"JSON":  string(out),
+		}
+		// all the field +
+		for _, f := range item.Details.Fields {
+			if f.Value != "" {
+				results[f.Name] = f.Value
+			}
+		}
+		// all fields in all sections
+		for _, s := range item.Details.Sections {
+			for _, f := range s.Fields {
+				if f.Value != "" {
+					results[f.Title] = f.Value
+				}
+			}
+		}
+
+		return results
 	})
 }
 
-func initModel() {
+func initListModel() {
 	// create a new model and connect necessary functions
 	// model uses filteredItems as data source
 	model = core.NewQAbstractListModel(nil)
@@ -99,12 +192,11 @@ func initModel() {
 	})
 }
 
-func setupListData(data []byte) {
-	// update items from json data
-	items = nil
-	err := json.Unmarshal(data, &items)
-	if err != nil {
-		// crash
-		log.Fatal(err)
+func logExit(err error) {
+	exitErr, ok := err.(*exec.ExitError)
+	if ok {
+		log.Print(err, string(exitErr.Stderr))
+	} else {
+		log.Print(err)
 	}
 }

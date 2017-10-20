@@ -152,6 +152,11 @@ func (s *Search) ContextMenuData(listener func(int) map[string]string) {
 		selected := s.list.SelectedIndexes()[0].Row()
 		data := listener(selected)
 
+		if data == nil {
+			// no data probably logged out
+			return
+		}
+
 		// each data item is a copy action
 		actions := make([]*widgets.QAction, 0)
 		for key, value := range data {
@@ -168,7 +173,7 @@ func createCopyAction(key, value string) *widgets.QAction {
 	label := fmt.Sprintf("Copy %v", key)
 	action := widgets.NewQAction2(label, nil)
 	action.ConnectTriggered(func(checked bool) {
-		fmt.Println("Copy to clipboard", value)
+		app.Clipboard().SetText(value, gui.QClipboard__Clipboard)
 	})
 	return action
 }
