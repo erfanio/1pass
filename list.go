@@ -52,6 +52,8 @@ type sectionField struct {
 }
 
 var (
+	cachedJson    string
+	cachedItem    completeItem
 	items         []partialItem
 	filteredItems []partialItem
 	model         *core.QAbstractListModel
@@ -119,31 +121,41 @@ func initListGui(sessionEnv string) {
 	})
 
 	search.ContextMenuData(func(row int) map[string]string {
-		// get items from op
-		cmd := exec.Command("/bin/op", "get", "item", filteredItems[row].Uuid)
-		cmd.Env = append(os.Environ(), sessionEnv)
-		out, err := cmd.Output()
+		uuid := filteredItems[row].Uuid
+		// get items from op (if not cached aka most recent one)
+		if uuid != cachedItem.Uuid {
+			cmd := exec.Command("/bin/op", "get", "item", uuid)
+			cmd.Env = append(os.Environ(), sessionEnv)
+			out, err := cmd.Output()
 
-		// login if list couldn't be fetched
-		if err != nil {
-			logExit(err)
-			initLogin()
-			return nil
+			// login if list couldn't be fetched
+			if err != nil {
+				logExit(err)
+				initLogin()
+				return nil
+			}
+
+			// get item
+			var item completeItem
+			err = json.Unmarshal(out, &item)
+			if err != nil {
+				// crash
+				log.Fatal(err)
+			}
+
+			// remember for next time
+			cachedItem = item
+			cachedJson = string(out)
 		}
 
-		// get item
-		var item completeItem
-		err = json.Unmarshal(out, &item)
-		if err != nil {
-			// crash
-			log.Fatal(err)
-		}
+		// get from cache (either just updated or not)
+		item := cachedItem
 
 		// basic info +
 		results := map[string]string{
 			"notes": item.Details.Notes,
 			"url":   item.Overview.Url,
-			"JSON":  string(out),
+			"JSON":  cachedJson,
 		}
 		// all the field +
 		for _, f := range item.Details.Fields {
