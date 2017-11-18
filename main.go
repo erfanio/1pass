@@ -11,8 +11,8 @@ import (
 
 var (
 	settings *core.QSettings
-	search   frontend.Search
-	login    frontend.Login
+	search   *frontend.Search
+	login    *frontend.Login
 )
 
 func main() {
@@ -21,7 +21,10 @@ func main() {
 	settings = core.NewQSettings2(core.QSettings__UserScope, "erfan.io", "1pass", nil)
 
 	// search window
-	search = frontend.NewSearch()
+	search = frontend.NewSearch(nil, core.Qt__Tool|
+		core.Qt__FramelessWindowHint|
+		core.Qt__WindowCloseButtonHint|
+		core.Qt__WindowStaysOnTopHint)
 	search.Show()
 
 	// get items list and setup its gui (if fails, will prompt login)
@@ -33,7 +36,7 @@ func main() {
 
 func initLogin() {
 	// login
-	login = frontend.NewLogin()
+	login = frontend.NewLogin(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
 	// get input's previous state (or default)
 	login.SetDomain(settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString())
 	login.SetEmail(settings.Value("email", core.NewQVariant17("")).ToString())

@@ -7,7 +7,10 @@ import (
 )
 
 type Login struct {
-	window   *widgets.QDialog
+	widgets.QDialog
+
+	_ func() `constructor:"init"`
+
 	layout   *widgets.QFormLayout
 	domain   *widgets.QLineEdit
 	email    *widgets.QLineEdit
@@ -16,40 +19,39 @@ type Login struct {
 	button   *widgets.QPushButton
 }
 
-func NewLogin() Login {
+func (w *Login) init() {
 	// login is triggered by clicking enter on inputs
 	// window needs to be a dialog for this work
-	window := widgets.NewQDialog(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
-	window.SetWindowTitle("Login")
+	w.SetWindowTitle("Login")
 
 	// vertical layout
-	layout := widgets.NewQFormLayout(nil)
-	window.SetLayout(layout)
+	w.layout = widgets.NewQFormLayout(nil)
+	w.SetLayout(w.layout)
 
 	// add the form (inputs and a button)
-	domain := widgets.NewQLineEdit(nil)
-	domain.SetText("my.1password.com")
-	layout.AddRow3("Domain", domain)
+	w.domain = widgets.NewQLineEdit(nil)
+	w.domain.SetText("my.1password.com")
+	w.layout.AddRow3("Domain", w.domain)
 
-	email := widgets.NewQLineEdit(nil)
-	layout.AddRow3("Email", email)
+	w.email = widgets.NewQLineEdit(nil)
+	w.layout.AddRow3("Email", w.email)
 
-	key := widgets.NewQLineEdit(nil)
-	layout.AddRow3("Secret Key", key)
+	w.key = widgets.NewQLineEdit(nil)
+	w.layout.AddRow3("Secret Key", w.key)
 
-	password := widgets.NewQLineEdit(nil)
+	w.password = widgets.NewQLineEdit(nil)
 	// don't show the password
-	password.SetEchoMode(widgets.QLineEdit__Password)
-	layout.AddRow3("Master Password", password)
+	w.password.SetEchoMode(widgets.QLineEdit__Password)
+	w.layout.AddRow3("Master Password", w.password)
 
-	button := widgets.NewQPushButton2("Sign In", nil)
-	button.SetDefault(true)
-	layout.AddRow5(button)
+	w.button = widgets.NewQPushButton2("Sign In", nil)
+	w.button.SetDefault(true)
+	w.layout.AddRow5(w.button)
 
 	// focus on first empty input
-	window.ConnectShowEvent(func(event *gui.QShowEvent) {
+	w.ConnectShowEvent(func(event *gui.QShowEvent) {
 		// a list of inputs in order
-		inputs := []*widgets.QLineEdit{domain, email, key, password}
+		inputs := []*widgets.QLineEdit{w.domain, w.email, w.key, w.password}
 
 		for i := range inputs {
 			input := inputs[i]
@@ -61,69 +63,50 @@ func NewLogin() Login {
 	})
 
 	// close the app if login is rejected (esc key)
-	window.ConnectRejected(func() {
+	w.ConnectRejected(func() {
 		CloseGui()
 	})
-
-	// callback on click
-	return Login{
-		window,
-		layout,
-		domain,
-		email,
-		key,
-		password,
-		button,
-	}
 }
 
-func (l *Login) OnSubmit(listener func(string, string, string, string)) {
-	l.button.ConnectClicked(func(checked bool) {
-		domainText := l.domain.Text()
-		emailText := l.email.Text()
-		keyText := l.key.Text()
-		passwordText := l.password.Text()
+func (w *Login) OnSubmit(listener func(string, string, string, string)) {
+	w.button.ConnectClicked(func(checked bool) {
+		domainText := w.domain.Text()
+		emailText := w.email.Text()
+		keyText := w.key.Text()
+		passwordText := w.password.Text()
 
 		listener(domainText, emailText, keyText, passwordText)
 	})
 }
 
-func (l *Login) Show() {
-	l.window.Show()
+func (w *Login) SetDomain(text string) {
+	w.domain.SetText(text)
 }
 
-func (l *Login) Hide() {
-	l.window.Hide()
+func (w *Login) SetEmail(text string) {
+	w.email.SetText(text)
 }
 
-func (l *Login) SetDomain(text string) {
-	l.domain.SetText(text)
+func (w *Login) SetKey(text string) {
+	w.key.SetText(text)
 }
 
-func (l *Login) SetEmail(text string) {
-	l.email.SetText(text)
+func (w *Login) SetPassword(text string) {
+	w.password.SetText(text)
 }
 
-func (l *Login) SetKey(text string) {
-	l.key.SetText(text)
-}
-
-func (l *Login) SetPassword(text string) {
-	l.password.SetText(text)
-}
-
-func (l *Login) StartWait() {
+func (w *Login) StartWait() {
 	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
-	l.window.SetCursor(cursor)
-	l.button.SetDisabled(true)
+	w.SetCursor(cursor)
+	w.button.SetDisabled(true)
 	// this is necessary to process this event instantly
 	app.ProcessEvents(core.QEventLoop__AllEvents)
 }
 
-func (l *Login) EndWait() {
+func (w *Login) EndWait() {
 	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
-	l.window.SetCursor(cursor)
-	l.button.SetDisabled(false)
+	w.SetCursor(cursor)
+	w.button.SetDisabled(false)
 	// this is necessary to process this event instantly
 	app.ProcessEvents(core.QEventLoop__AllEvents)
 }

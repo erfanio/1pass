@@ -15,7 +15,10 @@ const (
 )
 
 type Search struct {
-	window       *widgets.QWidget
+	widgets.QWidget
+
+	_ func() `constructor:"init"`
+
 	windowLayout *widgets.QVBoxLayout
 	innerWindow  *widgets.QFrame
 	layout       *widgets.QVBoxLayout
@@ -24,132 +27,109 @@ type Search struct {
 	list         *widgets.QListView
 }
 
-func NewSearch() Search {
+func (w *Search) init() {
 	fmt.Println("hi")
 
-	// main window is floating
-	window := widgets.NewQWidget(nil, core.Qt__Tool|
-		core.Qt__FramelessWindowHint|
-		core.Qt__WindowCloseButtonHint|
-		core.Qt__WindowStaysOnTopHint)
-	window.SetWindowTitle(APP_NAME)
+	w.SetWindowTitle(APP_NAME)
 	// tell window to quit when it closes (Qt::Tool turns this off for some reason)
-	window.SetAttribute(core.Qt__WA_QuitOnClose, true)
-	window.SetAttribute(core.Qt__WA_TranslucentBackground, true)
+	w.SetAttribute(core.Qt__WA_QuitOnClose, true)
+	w.SetAttribute(core.Qt__WA_TranslucentBackground, true)
 
 	// window is layed out vertically
-	windowLayout := widgets.NewQVBoxLayout()
-	windowLayout.SetContentsMargins(0, 0, 0, 0)
-	window.SetLayout(windowLayout)
+	w.windowLayout = widgets.NewQVBoxLayout()
+	w.windowLayout.SetContentsMargins(0, 0, 0, 0)
+	w.SetLayout(w.windowLayout)
 
 	// add a inner window widget (since window is completely transparent this is needed for the border)
-	innerWindow := widgets.NewQFrame(nil, 0)
-	innerWindow.SetObjectName("innerWindow")
-	windowLayout.AddWidget(innerWindow, 0, 0)
+	w.innerWindow = widgets.NewQFrame(nil, 0)
+	w.innerWindow.SetObjectName("innerWindow")
+	w.windowLayout.AddWidget(w.innerWindow, 0, 0)
 
 	// inner window is layed vertically
-	layout := widgets.NewQVBoxLayout()
-	layout.SetContentsMargins(0, 0, 0, 0)
-	innerWindow.SetLayout(layout)
+	w.layout = widgets.NewQVBoxLayout()
+	w.layout.SetContentsMargins(0, 0, 0, 0)
+	w.innerWindow.SetLayout(w.layout)
 
 	// LineEdit for the search query
-	input := widgets.NewQLineEdit(nil)
-	input.SetObjectName("input")
-	input.SetFixedHeight(EDITLINE_HEIGHT)
-	layout.AddWidget(input, 0, 0)
+	w.input = widgets.NewQLineEdit(nil)
+	w.input.SetObjectName("input")
+	w.input.SetFixedHeight(EDITLINE_HEIGHT)
+	w.layout.AddWidget(w.input, 0, 0)
 
 	// list of logins
-	list := widgets.NewQListView(nil)
-	list.SetObjectName("list")
+	w.list = widgets.NewQListView(nil)
+	w.list.SetObjectName("list")
 	// expands horizontally but sticks to size hint vertically
-	list.SetSizePolicy2(widgets.QSizePolicy__Expanding, widgets.QSizePolicy__Fixed)
+	w.list.SetSizePolicy2(widgets.QSizePolicy__Expanding, widgets.QSizePolicy__Fixed)
 	// hidden by default (shown as soon as something appears inside)
-	list.Hide()
+	w.list.Hide()
 
 	// items in the list of logins
-	item := widgets.NewQStyledItemDelegate(nil)
+	w.item = widgets.NewQStyledItemDelegate(nil)
 	// set the list items
-	list.SetItemDelegate(item)
-	layout.AddWidget(list, 0, 0)
+	w.list.SetItemDelegate(w.item)
+	w.layout.AddWidget(w.list, 0, 0)
 
 	// exit on esc
-	input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
+	w.input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
 		if event.Key() == int(core.Qt__Key_Escape) {
 			CloseGui()
 		} else {
-			input.KeyPressEventDefault(event)
+			w.input.KeyPressEventDefault(event)
 		}
 	})
 
 	// size of the list items
-	item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
+	w.item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
 		// only care about setting the correct height
-		return core.NewQSize2(item.SizeHintDefault(option, index).Width(), RESULT_HEIGHT)
+		return core.NewQSize2(w.item.SizeHintDefault(option, index).Width(), RESULT_HEIGHT)
 	})
 	// let the list be empty (shrink to 0px)
-	list.ConnectMinimumSizeHint(func() *core.QSize {
+	w.list.ConnectMinimumSizeHint(func() *core.QSize {
 		return core.NewQSize2(0, 0)
 	})
 	// size of the list (don't let the list grow bigger than 5 items)
-	list.ConnectSizeHint(func() *core.QSize {
-		rowSize := list.SizeHintForRow(0)
+	w.list.ConnectSizeHint(func() *core.QSize {
+		rowSize := w.list.SizeHintForRow(0)
 		// -1 when hidden should be 0
 		if rowSize < 0 {
 			rowSize = 0
 		}
-		count := list.Model().RowCount(core.NewQModelIndex())
+		count := w.list.Model().RowCount(core.NewQModelIndex())
 		if count > 5 {
 			count = 5
 		}
 		// only care about setting the correct height
-		return core.NewQSize2(list.SizeHintDefault().Width(), RESULT_HEIGHT*count)
+		return core.NewQSize2(w.list.SizeHintDefault().Width(), RESULT_HEIGHT*count)
 	})
 
 	// make window draggable
 	var xOffset, yOffset int
-	window.ConnectMousePressEvent(func(event *gui.QMouseEvent) {
+	w.ConnectMousePressEvent(func(event *gui.QMouseEvent) {
 		xOffset = event.X()
 		yOffset = event.Y()
 	})
-	window.ConnectMouseMoveEvent(func(event *gui.QMouseEvent) {
-		window.Move2(event.GlobalX()-xOffset, event.GlobalY()-yOffset)
+	w.ConnectMouseMoveEvent(func(event *gui.QMouseEvent) {
+		w.Move2(event.GlobalX()-xOffset, event.GlobalY()-yOffset)
 	})
-
-	return Search{
-		window,
-		windowLayout,
-		innerWindow,
-		layout,
-		input,
-		item,
-		list,
-	}
 }
 
-func (s *Search) Show() {
-	s.window.Show()
+func (w *Search) HideList() {
+	w.list.Hide()
+	w.updateParentSize()
 }
 
-func (s *Search) Hide() {
-	s.window.Hide()
-}
-
-func (s *Search) HideList() {
-	s.list.Hide()
-	s.updateParentSize()
-}
-
-func (s *Search) OnTextChanged(listener func(string)) {
-	s.input.ConnectTextChanged(func(text string) {
+func (w *Search) OnTextChanged(listener func(string)) {
+	w.input.ConnectTextChanged(func(text string) {
 		listener(text)
 	})
 }
 
-func (s *Search) ContextMenuData(listener func(int) map[string]string) {
+func (w *Search) ContextMenuData(listener func(int) map[string]string) {
 	// send a listener the
-	s.list.ConnectContextMenuEvent(func(event *gui.QContextMenuEvent) {
+	w.list.ConnectContextMenuEvent(func(event *gui.QContextMenuEvent) {
 		// get data
-		selected := s.list.SelectedIndexes()[0].Row()
+		selected := w.list.SelectedIndexes()[0].Row()
 		data := listener(selected)
 
 		if data == nil {
@@ -165,7 +145,7 @@ func (s *Search) ContextMenuData(listener func(int) map[string]string) {
 		}
 
 		menu := widgets.NewQMenu(nil)
-		menu.Exec3(actions, event.GlobalPos(), actions[0], s.list)
+		menu.Exec3(actions, event.GlobalPos(), actions[0], w.list)
 	})
 }
 
@@ -178,25 +158,25 @@ func createCopyAction(key, value string) *widgets.QAction {
 	return action
 }
 
-func (s *Search) SetListModel(model core.QAbstractItemModel_ITF) {
-	s.list.SetModel(model)
+func (w *Search) SetListModel(model core.QAbstractItemModel_ITF) {
+	w.list.SetModel(model)
 }
 
-func (s *Search) UpdateSize() {
-	count := s.list.Model().RowCount(core.NewQModelIndex())
+func (w *Search) UpdateSize() {
+	count := w.list.Model().RowCount(core.NewQModelIndex())
 	// hide if empty
 	if count > 0 {
-		s.list.Show()
-		s.list.UpdateGeometry()
+		w.list.Show()
+		w.list.UpdateGeometry()
 	} else {
-		s.list.Hide()
+		w.list.Hide()
 	}
 
-	s.updateParentSize()
+	w.updateParentSize()
 }
 
-func (s *Search) updateParentSize() {
-	parent := s.list.ParentWidget()
+func (w *Search) updateParentSize() {
+	parent := w.list.ParentWidget()
 	for parent != nil {
 		parent.AdjustSize()
 		parent = parent.ParentWidget()
