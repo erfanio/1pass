@@ -1,9 +1,18 @@
-package frontend
+package main
 
 import (
 	"github.com/therecipe/qt/widgets"
 	"os"
 )
+
+var ui *UI
+
+type UI struct {
+	widgets.QApplication
+
+	Search *SearchUI
+	Login  *LoginUI
+}
 
 const stylesheet = `
 * {
@@ -34,24 +43,12 @@ const stylesheet = `
 }
 `
 
-var app *widgets.QApplication
+func setupUI() {
+	// NewGui will create a new QApplication
+	ui = NewUI(len(os.Args), os.Args)
+	ui.SetStyleSheet(stylesheet)
 
-func InitGui() {
-	// new app
-	app = widgets.NewQApplication(len(os.Args), os.Args)
-	app.SetStyleSheet(stylesheet)
-}
-
-func StartGui() {
-	app.Exec()
-}
-
-func CloseGui() {
-	app.Quit()
-}
-
-func ShowError(msg string) {
-	errorDialog := widgets.NewQErrorMessage(nil)
-	errorDialog.ShowMessage(msg)
-	errorDialog.Exec()
+	// setup the windows
+	ui.Search = setupSearch()
+	ui.Login = setupLogin()
 }

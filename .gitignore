@@ -1,6 +1,2 @@
 deploy
-moc.cpp
-moc.go
-moc.h
-moc_cgo_linux_linux_amd64.go
-moc_moc.h
+moc*
