@@ -43,5 +43,7 @@ func submitLogin(domain, email, key, password string) {
 		// save session (valid for 30 min)
 		session := strings.TrimSpace(string(out))
 		settings.SetValue("session_key", core.NewQVariant17(session))
+
+		tryFetching()
 	}
 }

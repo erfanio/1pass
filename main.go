@@ -14,6 +14,7 @@ var (
 )
 
 func main() {
+	fmt.Println("hi :)")
 	// setup
 	settings = core.NewQSettings2(core.QSettings__UserScope, "erfan.io", "1pass", nil)
 
@@ -39,17 +40,19 @@ func tryFetching() {
 	// if logged in, session will let us send queries for 30 min
 	session := getSession()
 
-	// get list of item summaries from 1pass's cli
-	cmd := exec.Command("/bin/op", "list", "items")
-	cmd.Env = append(os.Environ(), session)
-	output, err := cmd.Output()
+	go func() {
+		// get list of item summaries from 1pass's cli
+		cmd := exec.Command("/bin/op", "list", "items")
+		cmd.Env = append(os.Environ(), session)
+		output, err := cmd.Output()
 
-	// login if error (probably not logged in)
-	if err != nil {
-		log.Print(err)
-		promptLogin()
-	} else {
-		items := json2list(output)
-		populateList(items)
-	}
+		// login if error (probably not logged in)
+		if err != nil {
+			log.Print(err)
+			promptLogin()
+		} else {
+			items := json2list(output)
+			populateList(items)
+		}
+	}()
 }

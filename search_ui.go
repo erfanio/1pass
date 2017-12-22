@@ -16,12 +16,22 @@ const (
 type SearchUI struct {
 	widgets.QWidget
 
+	_ func()                          `slots:"Show"`
+	_ func()                          `slots:"Hide"`
+	_ func()                          `slots:"Disable"`
+	_ func()                          `slots:"Enable"`
+	_ func() *core.QAbstractListModel `slots:"GetNewListModel"`
+	_ func(*core.QAbstractListModel)  `slots:"SetListModel"`
+	_ func()                          `slots:"ListDataWillChange`
+	_ func()                          `slots:"ListDataDidChange`
+
 	WindowLayout *widgets.QVBoxLayout
 	InnerWindow  *widgets.QFrame
 	Layout       *widgets.QVBoxLayout
 	Input        *widgets.QLineEdit
 	Item         *widgets.QStyledItemDelegate
 	List         *widgets.QListView
+	ListModel    *core.QAbstractListModel
 }
 
 func setupSearch() *SearchUI {
@@ -54,6 +64,7 @@ func setupSearch() *SearchUI {
 	// LineEdit for the search query
 	w.Input = widgets.NewQLineEdit(nil)
 	w.Input.SetObjectName("input")
+	w.Input.SetDisabled(true)
 	w.Input.SetFixedHeight(EDITLINE_HEIGHT)
 	w.Layout.AddWidget(w.Input, 0, 0)
 
@@ -70,6 +81,13 @@ func setupSearch() *SearchUI {
 	// set the list items
 	w.List.SetItemDelegate(w.Item)
 	w.Layout.AddWidget(w.List, 0, 0)
+
+	// model for the list to provide data
+	w.ListModel = core.NewQAbstractListModel(nil)
+	w.ListModel.ConnectFlags(func(index *core.QModelIndex) core.Qt__ItemFlag {
+		return core.Qt__ItemIsSelectable | core.Qt__ItemIsEnabled
+	})
+	w.List.SetModel(w.ListModel)
 
 	w.setupEventListeners()
 	return w
@@ -137,4 +155,41 @@ func (w *SearchUI) UpdateSize() {
 		parent.AdjustSize()
 		parent = parent.ParentWidget()
 	}
+}
+
+func (w *SearchUI) Show() {
+	w.QWidget.Show()
+}
+
+func (w *SearchUI) Hide() {
+	w.QWidget.Hide()
+}
+
+func (w *SearchUI) Enable() {
+	w.Input.SetDisabled(false)
+}
+
+func (w *SearchUI) SetupListModel(row func(int, int) string, count func() int) {
+	w.ListDataWillChange()
+
+	w.ListModel.ConnectData(func(index *core.QModelIndex, role int) *core.QVariant {
+		strData := row(index.Row(), role)
+		if strData != "" {
+			return core.NewQVariant17(strData)
+		}
+		return core.NewQVariant()
+	})
+	w.ListModel.ConnectRowCount(func(parent *core.QModelIndex) int {
+		return count()
+	})
+
+	w.ListDataDidChange()
+}
+
+func (w *SearchUI) ListDataWillChange() {
+	w.ListModel.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
+}
+
+func (w *SearchUI) ListDataDidChange() {
+	w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 }
