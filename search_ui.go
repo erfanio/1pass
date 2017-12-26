@@ -19,12 +19,11 @@ type SearchUI struct {
 	_ func()                          `slots:"Show"`
 	_ func()                          `slots:"Hide"`
 	_ func()                          `slots:"Disable"`
-	_ func()                          `slots:"Enable"`
 	_ func() *core.QAbstractListModel `slots:"GetNewListModel"`
 	_ func(*core.QAbstractListModel)  `slots:"SetListModel"`
 	_ func()                          `slots:"ListDataWillChange`
 	_ func()                          `slots:"ListDataDidChange`
-	_ func()                          `slots:"Focus`
+	_ func()                          `slots:"EnableAndFocus`
 
 	WindowLayout *widgets.QVBoxLayout
 	InnerWindow  *widgets.QFrame
@@ -137,6 +136,15 @@ func (w *SearchUI) setupEventListeners() {
 	w.Input.ConnectTextChanged(func(text string) {
 		filter(text)
 	})
+
+	// focus on input when enabled
+	w.Input.ConnectChangeEvent(func(event *core.QEvent) {
+		if event.Type() == core.QEvent__EnabledChange {
+			w.Input.SetFocus(core.Qt__NoFocusReason)
+		} else {
+			w.Input.ChangeEventDefault(event)
+		}
+	})
 }
 
 // updates the size of the list (auto hides if list model is empty)
@@ -166,10 +174,6 @@ func (w *SearchUI) Hide() {
 	w.QWidget.Hide()
 }
 
-func (w *SearchUI) Enable() {
-	w.Input.SetDisabled(false)
-}
-
 func (w *SearchUI) SetupListModel(row func(int, int) string, count func() int) {
 	w.ListDataWillChange()
 
@@ -195,6 +199,6 @@ func (w *SearchUI) ListDataDidChange() {
 	w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 }
 
-func (w *SearchUI) Focus() {
-	w.Input.SetFocus(core.Qt__NoFocusReason)
+func (w *SearchUI) EnableAndFocus() {
+	w.Input.SetDisabled(false)
 }
