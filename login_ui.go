@@ -105,14 +105,18 @@ func (w *LoginUI) SetDisabled(disabled bool) {
 	w.Button.SetDisabled(disabled)
 }
 
-// Enable is a shortcut for SetDisabled(false)
+// Enable is a shortcut for SetDisabled(false) and setting cursor back to default
 func (w *LoginUI) Enable() {
 	w.SetDisabled(false)
+	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
+	w.SetCursor(cursor)
 }
 
-// Disable is a shortcut for SetDisabled(true)
+// Disable is a shortcut for SetDisabled(true) and setting cursor to wait
 func (w *LoginUI) Disable() {
 	w.SetDisabled(true)
+	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
+	w.SetCursor(cursor)
 }
 
 // SetInputTexts sets the text in the inputs (if string is empty will not override previous state)

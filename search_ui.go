@@ -44,6 +44,10 @@ func setupSearch() *SearchUI {
 		core.Qt__WindowStaysOnTopHint)
 	w.SetWindowTitle(appName)
 
+	// initially in waiting state
+	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
+	w.SetCursor(cursor)
+
 	// tell window to quit when it closes (Qt::Tool turns this off for some reason)
 	w.SetAttribute(core.Qt__WA_QuitOnClose, true)
 	w.SetAttribute(core.Qt__WA_TranslucentBackground, true)
@@ -211,4 +215,6 @@ func (w *SearchUI) ListDataDidChange() {
 // listener that wll focus the input when it is enabled
 func (w *SearchUI) EnableAndFocus() {
 	w.Input.SetDisabled(false)
+	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
+	w.SetCursor(cursor)
 }
