@@ -7,12 +7,14 @@ import (
 )
 
 const (
-	APP_NAME        = "1Password Lookup"
-	WINDOW_WIDTH    = 600
-	EDITLINE_HEIGHT = 50
-	RESULT_HEIGHT   = 50
+	appName        = "1Password Lookup"
+	windowWidth    = 600
+	editlineHeight = 50
+	resultHeight   = 50
 )
 
+// SearchUI is a "class" that is the search popup
+// it stores the Qt objects and provides the slots to manipulate it
 type SearchUI struct {
 	widgets.QWidget
 
@@ -40,7 +42,7 @@ func setupSearch() *SearchUI {
 		core.Qt__FramelessWindowHint|
 		core.Qt__WindowCloseButtonHint|
 		core.Qt__WindowStaysOnTopHint)
-	w.SetWindowTitle(APP_NAME)
+	w.SetWindowTitle(appName)
 
 	// tell window to quit when it closes (Qt::Tool turns this off for some reason)
 	w.SetAttribute(core.Qt__WA_QuitOnClose, true)
@@ -65,7 +67,7 @@ func setupSearch() *SearchUI {
 	w.Input = widgets.NewQLineEdit(nil)
 	w.Input.SetObjectName("input")
 	w.Input.SetDisabled(true)
-	w.Input.SetFixedHeight(EDITLINE_HEIGHT)
+	w.Input.SetFixedHeight(editlineHeight)
 	w.Layout.AddWidget(w.Input, 0, 0)
 
 	// list of logins
@@ -104,7 +106,7 @@ func (w *SearchUI) setupEventListeners() {
 	})
 
 	w.Item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
-		return core.NewQSize2(w.Item.SizeHintDefault(option, index).Width(), RESULT_HEIGHT)
+		return core.NewQSize2(w.Item.SizeHintDefault(option, index).Width(), resultHeight)
 	})
 	w.List.ConnectMinimumSizeHint(func() *core.QSize {
 		return core.NewQSize2(0, 0)
@@ -120,7 +122,7 @@ func (w *SearchUI) setupEventListeners() {
 		if count > 5 {
 			count = 5
 		}
-		return core.NewQSize2(w.List.SizeHintDefault().Width(), RESULT_HEIGHT*count)
+		return core.NewQSize2(w.List.SizeHintDefault().Width(), resultHeight*count)
 	})
 
 	// make window draggable
@@ -147,7 +149,7 @@ func (w *SearchUI) setupEventListeners() {
 	})
 }
 
-// updates the size of the list (auto hides if list model is empty)
+// UpdateSize updates the size of the list (auto hides if list model is empty)
 func (w *SearchUI) UpdateSize() {
 	count := w.List.Model().RowCount(core.NewQModelIndex())
 	// hide if no items in the list
@@ -166,14 +168,18 @@ func (w *SearchUI) UpdateSize() {
 	}
 }
 
+// Show shows the search popup
 func (w *SearchUI) Show() {
 	w.QWidget.Show()
 }
 
+// Hide hides the search popup
 func (w *SearchUI) Hide() {
 	w.QWidget.Hide()
 }
 
+// SetupListModel will set a new model to list and setup two listeners provides for
+// data and row count
 func (w *SearchUI) SetupListModel(row func(int, int) string, count func() int) {
 	w.ListDataWillChange()
 
@@ -191,14 +197,18 @@ func (w *SearchUI) SetupListModel(row func(int, int) string, count func() int) {
 	w.ListDataDidChange()
 }
 
+// ListDataWillChange notifies the model data is going to change
 func (w *SearchUI) ListDataWillChange() {
 	w.ListModel.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 }
 
+// ListDataDidChange notifies the model data has changed
 func (w *SearchUI) ListDataDidChange() {
 	w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 }
 
+// EnableAndFocus will enable the input which will trigger a
+// listener that wll focus the input when it is enabled
 func (w *SearchUI) EnableAndFocus() {
 	w.Input.SetDisabled(false)
 }

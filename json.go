@@ -6,14 +6,14 @@ import (
 )
 
 type partialItem struct {
-	Uuid         string   `json:"uuid"`
-	TemplateUuid string   `json:"templateUuid"`
+	UUID         string   `json:"uuid"`
+	TemplateUUID string   `json:"templateUuid"`
 	Overview     overview `json:"overview"`
 }
 
 type completeItem struct {
-	Uuid         string   `json:"uuid"`
-	TemplateUuid string   `json:"templateUuid"`
+	UUID         string   `json:"uuid"`
+	TemplateUUID string   `json:"templateUuid"`
 	Overview     overview `json:"overview"`
 	Details      details  `json:"details"`
 }
@@ -21,7 +21,7 @@ type completeItem struct {
 type overview struct {
 	AdditionalInfo string `json:"ainfo"`
 	Title          string `json:"title"`
-	Url            string `json:"url"`
+	URL            string `json:"url"`
 }
 
 type details struct {

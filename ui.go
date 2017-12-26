@@ -7,6 +7,7 @@ import (
 
 var ui *UI
 
+// UI is a "class" for the app, holds an instance of SearchUI and LoginUI
 type UI struct {
 	widgets.QApplication
 

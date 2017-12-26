@@ -6,6 +6,8 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
+// LoginUI is a "class" that is the login dialog
+// it stores the Qt objects and provides the slots to manipulate it
 type LoginUI struct {
 	widgets.QDialog
 
@@ -84,14 +86,17 @@ func (w *LoginUI) setupEventListeners() {
 	})
 }
 
+// Show shows the login dialog
 func (w *LoginUI) Show() {
 	w.QDialog.Show()
 }
 
+// Hide hides the login dialog
 func (w *LoginUI) Hide() {
 	w.QDialog.Hide()
 }
 
+// SetDisabled sets the disabled state of the dialog components (inputs, button)
 func (w *LoginUI) SetDisabled(disabled bool) {
 	w.Domain.SetDisabled(disabled)
 	w.Email.SetDisabled(disabled)
@@ -100,14 +105,17 @@ func (w *LoginUI) SetDisabled(disabled bool) {
 	w.Button.SetDisabled(disabled)
 }
 
+// Enable is a shortcut for SetDisabled(false)
 func (w *LoginUI) Enable() {
 	w.SetDisabled(false)
 }
 
+// Disable is a shortcut for SetDisabled(true)
 func (w *LoginUI) Disable() {
 	w.SetDisabled(true)
 }
 
+// SetInputTexts sets the text in the inputs (if string is empty will not override previous state)
 func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 	if len(domain) > 0 {
 		w.Domain.SetText(domain)
@@ -123,6 +131,7 @@ func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 	}
 }
 
+// ShowError will display a dismissable error dialog with a message
 func (w *LoginUI) ShowError(msg string) {
 	errorDialog := widgets.NewQErrorMessage(nil)
 	errorDialog.ShowMessage(msg)

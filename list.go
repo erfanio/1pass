@@ -27,7 +27,7 @@ func filter(text string) {
 
 		for _, item := range unfiltered {
 			if strings.Contains(strings.ToLower(item.Overview.Title), target) ||
-				strings.Contains(strings.ToLower(item.Overview.Url), target) ||
+				strings.Contains(strings.ToLower(item.Overview.URL), target) ||
 				strings.Contains(strings.ToLower(item.Overview.AdditionalInfo), target) {
 				filtered = append(filtered, item)
 			}
