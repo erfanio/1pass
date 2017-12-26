@@ -13,6 +13,7 @@ var (
 func populateList(items []partialItem) {
 	unfiltered = items
 	setupModel()
+	ui.Search.Focus()
 }
 
 func filter(text string) {

@@ -9,6 +9,14 @@ import (
 type LoginUI struct {
 	widgets.QDialog
 
+	_ func()                               `slots:"Show"`
+	_ func()                               `slots:"Hide"`
+	_ func()                               `slots:"Disable"`
+	_ func()                               `slots:"Enable"`
+	_ func(bool)                           `slots:"SetDisabled"`
+	_ func(string, string, string, string) `slots:"SetInputTexts"`
+	_ func(string)                         `slots:"ShowError"`
+
 	Layout   *widgets.QFormLayout
 	Domain   *widgets.QLineEdit
 	Email    *widgets.QLineEdit
@@ -76,6 +84,30 @@ func (w *LoginUI) setupEventListeners() {
 	})
 }
 
+func (w *LoginUI) Show() {
+	w.QDialog.Show()
+}
+
+func (w *LoginUI) Hide() {
+	w.QDialog.Hide()
+}
+
+func (w *LoginUI) SetDisabled(disabled bool) {
+	w.Domain.SetDisabled(disabled)
+	w.Email.SetDisabled(disabled)
+	w.Key.SetDisabled(disabled)
+	w.Password.SetDisabled(disabled)
+	w.Button.SetDisabled(disabled)
+}
+
+func (w *LoginUI) Enable() {
+	w.SetDisabled(false)
+}
+
+func (w *LoginUI) Disable() {
+	w.SetDisabled(true)
+}
+
 func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 	if len(domain) > 0 {
 		w.Domain.SetText(domain)
@@ -89,4 +121,10 @@ func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 	if len(password) > 0 {
 		w.Password.SetText(password)
 	}
+}
+
+func (w *LoginUI) ShowError(msg string) {
+	errorDialog := widgets.NewQErrorMessage(nil)
+	errorDialog.ShowMessage(msg)
+	errorDialog.Exec()
 }

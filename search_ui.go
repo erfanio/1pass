@@ -24,6 +24,7 @@ type SearchUI struct {
 	_ func(*core.QAbstractListModel)  `slots:"SetListModel"`
 	_ func()                          `slots:"ListDataWillChange`
 	_ func()                          `slots:"ListDataDidChange`
+	_ func()                          `slots:"Focus`
 
 	WindowLayout *widgets.QVBoxLayout
 	InnerWindow  *widgets.QFrame
@@ -192,4 +193,8 @@ func (w *SearchUI) ListDataWillChange() {
 
 func (w *SearchUI) ListDataDidChange() {
 	w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
+}
+
+func (w *SearchUI) Focus() {
+	w.Input.SetFocus(core.Qt__NoFocusReason)
 }
