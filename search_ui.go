@@ -18,14 +18,13 @@ const (
 type SearchUI struct {
 	widgets.QWidget
 
-	_ func()                          `slots:"Show"`
-	_ func()                          `slots:"Hide"`
-	_ func()                          `slots:"Disable"`
-	_ func() *core.QAbstractListModel `slots:"GetNewListModel"`
-	_ func(*core.QAbstractListModel)  `slots:"SetListModel"`
-	_ func()                          `slots:"ListDataWillChange`
-	_ func()                          `slots:"ListDataDidChange`
-	_ func()                          `slots:"EnableAndFocus`
+	_ func()                                  `slots:"UpdateSize"`
+	_ func()                                  `slots:"Show"`
+	_ func()                                  `slots:"Hide"`
+	_ func(func(int, int) string, func() int) `slots:"SetupListModel"`
+	_ func()                                  `slots:"ListDataWillChange`
+	_ func()                                  `slots:"ListDataDidChange`
+	_ func()                                  `slots:"EnableAndFocus`
 
 	WindowLayout *widgets.QVBoxLayout
 	InnerWindow  *widgets.QFrame
