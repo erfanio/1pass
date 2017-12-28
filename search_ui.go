@@ -7,11 +7,41 @@ import (
 )
 
 const (
-	appName        = "1Password Lookup"
-	windowWidth    = 600
-	editlineHeight = 50
-	resultHeight   = 50
+	appName           = "1Password Lookup"
+	searchWidth       = 500
+	searchInputHeight = 50
+	resultHeight      = 50
+	maxResults        = 5
 )
+
+const searchStyles = `
+* {
+  background-color: #EEEEEE;
+}
+
+#innerWindow {
+  padding: 5px;
+  border-radius: 5px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #E0E0E0;
+}
+
+#input {
+  font-size: 28px;
+  background-color: #fff;
+  border-radius: 2px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #E0E0E0;
+}
+
+#list {
+  border: none;
+  selection-background-color: #40C4FF;
+  selection-color: #000;
+}
+`
 
 // SearchUI is a "class" that is the search popup
 // it stores the Qt objects and provides the slots to manipulate it
@@ -42,6 +72,7 @@ func setupSearch() *SearchUI {
 		core.Qt__WindowCloseButtonHint|
 		core.Qt__WindowStaysOnTopHint)
 	w.SetWindowTitle(appName)
+	w.SetStyleSheet(searchStyles)
 
 	// initially in waiting state
 	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
@@ -70,7 +101,7 @@ func setupSearch() *SearchUI {
 	w.Input = widgets.NewQLineEdit(nil)
 	w.Input.SetObjectName("input")
 	w.Input.SetDisabled(true)
-	w.Input.SetFixedHeight(editlineHeight)
+	w.Input.SetFixedHeight(searchInputHeight)
 	w.Layout.AddWidget(w.Input, 0, 0)
 
 	// list of logins
@@ -99,6 +130,11 @@ func setupSearch() *SearchUI {
 }
 
 func (w *SearchUI) setupEventListeners() {
+	// set width hint
+	w.Input.ConnectSizeHint(func() *core.QSize {
+		return core.NewQSize2(searchWidth, w.Input.SizeHintDefault().Height())
+	})
+
 	// exit on esc
 	w.Input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
 		if event.Key() == int(core.Qt__Key_Escape) {
@@ -114,7 +150,7 @@ func (w *SearchUI) setupEventListeners() {
 	w.List.ConnectMinimumSizeHint(func() *core.QSize {
 		return core.NewQSize2(0, 0)
 	})
-	// size of the list (don't let the list grow bigger than 5 items)
+	// size of the list (don't let the list grow bigger than maxResults items)
 	w.List.ConnectSizeHint(func() *core.QSize {
 		rowSize := w.List.SizeHintForRow(0)
 		// -1 when hidden should be 0
@@ -122,8 +158,8 @@ func (w *SearchUI) setupEventListeners() {
 			rowSize = 0
 		}
 		count := w.List.Model().RowCount(core.NewQModelIndex())
-		if count > 5 {
-			count = 5
+		if count > maxResults {
+			count = maxResults
 		}
 		return core.NewQSize2(w.List.SizeHintDefault().Width(), resultHeight*count)
 	})

@@ -6,6 +6,36 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
+const (
+	loginWidth        = 400
+	loginInputHeight  = 35
+	loginButtonWidth  = 180
+	loginButtonHeight = 40
+)
+
+const loginStyles = `
+QLineEdit, QPushButton {
+  font-size: 12px;
+  background-color: #FFFFFF;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #BDBDBD;
+	padding: 5px;
+}
+
+QLineEdit {
+  border-radius: 2px;
+}
+
+QPushButton {
+  border-radius: 10px;
+}
+
+QPushButton:hover {
+	background-color: #F6F7FB;
+}
+`
+
 // LoginUI is a "class" that is the login dialog
 // it stores the Qt objects and provides the slots to manipulate it
 type LoginUI struct {
@@ -19,48 +49,70 @@ type LoginUI struct {
 	_ func(string, string, string, string) `slots:"SetInputTexts"`
 	_ func(string)                         `slots:"ShowError"`
 
-	Layout   *widgets.QFormLayout
-	Domain   *widgets.QLineEdit
-	Email    *widgets.QLineEdit
-	Key      *widgets.QLineEdit
-	Password *widgets.QLineEdit
-	Button   *widgets.QPushButton
+	Layout      *widgets.QVBoxLayout
+	Domain      *widgets.QLineEdit
+	Email       *widgets.QLineEdit
+	Key         *widgets.QLineEdit
+	Password    *widgets.QLineEdit
+	Button      *widgets.QPushButton
+	ErrorDialog *widgets.QErrorMessage
 }
 
 func setupLogin() *LoginUI {
 	// create the window
 	w := NewLoginUI(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
 	w.SetWindowTitle("Login")
+	w.SetStyleSheet(loginStyles)
 
 	// vertical layout
-	w.Layout = widgets.NewQFormLayout(nil)
+	w.Layout = widgets.NewQVBoxLayout()
 	w.SetLayout(w.Layout)
 
 	// add the form (inputs and a button)
+	w.Layout.AddWidget(widgets.NewQLabel2("Domain", nil, core.Qt__Widget), 0, 0)
 	w.Domain = widgets.NewQLineEdit(nil)
 	w.Domain.SetText("my.1password.com")
-	w.Layout.AddRow3("Domain", w.Domain)
+	w.Domain.SetFixedHeight(loginInputHeight)
+	w.Layout.AddWidget(w.Domain, 0, 0)
 
+	w.Layout.AddWidget(widgets.NewQLabel2("Email", nil, core.Qt__Widget), 0, 0)
 	w.Email = widgets.NewQLineEdit(nil)
-	w.Layout.AddRow3("Email", w.Email)
+	w.Email.SetFixedHeight(loginInputHeight)
+	w.Layout.AddWidget(w.Email, 0, 0)
 
+	w.Layout.AddWidget(widgets.NewQLabel2("Secret Key", nil, core.Qt__Widget), 0, 0)
 	w.Key = widgets.NewQLineEdit(nil)
-	w.Layout.AddRow3("Secret Key", w.Key)
+	w.Key.SetFixedHeight(loginInputHeight)
+	w.Layout.AddWidget(w.Key, 0, 0)
 
+	w.Layout.AddWidget(widgets.NewQLabel2("Master Password", nil, core.Qt__Widget), 0, 0)
 	w.Password = widgets.NewQLineEdit(nil)
+	w.Password.SetFixedHeight(loginInputHeight)
 	// don't show the password
 	w.Password.SetEchoMode(widgets.QLineEdit__Password)
-	w.Layout.AddRow3("Master Password", w.Password)
+	w.Layout.AddWidget(w.Password, 0, 0)
 
 	w.Button = widgets.NewQPushButton2("Sign In", nil)
 	w.Button.SetDefault(true)
-	w.Layout.AddRow5(w.Button)
+	w.Button.SetSizePolicy2(widgets.QSizePolicy__Maximum, widgets.QSizePolicy__Preferred)
+	w.Layout.AddWidget(w.Button, 0, 0)
+
+	w.ErrorDialog = widgets.NewQErrorMessage(nil)
 
 	w.setupEventListeners()
 	return w
 }
 
 func (w *LoginUI) setupEventListeners() {
+	// set width hint
+	w.ConnectSizeHint(func() *core.QSize {
+		return core.NewQSize2(loginWidth, w.SizeHintDefault().Height())
+	})
+
+	w.Button.ConnectSizeHint(func() *core.QSize {
+		return core.NewQSize2(loginButtonWidth, loginButtonHeight)
+	})
+
 	// focus on first empty input
 	w.ConnectShowEvent(func(event *gui.QShowEvent) {
 		// a list of inputs in order
@@ -82,6 +134,7 @@ func (w *LoginUI) setupEventListeners() {
 
 	// listen for form submission
 	w.Button.ConnectClicked(func(checked bool) {
+		println(core.QThread_CurrentThread().Pointer())
 		submitLogin(w.Domain.Text(), w.Email.Text(), w.Key.Text(), w.Password.Text())
 	})
 }
@@ -137,7 +190,6 @@ func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 
 // ShowError will display a dismissable error dialog with a message
 func (w *LoginUI) ShowError(msg string) {
-	errorDialog := widgets.NewQErrorMessage(nil)
-	errorDialog.ShowMessage(msg)
-	errorDialog.Exec()
+	w.ErrorDialog.ShowMessage(msg)
+	w.ErrorDialog.Exec()
 }
