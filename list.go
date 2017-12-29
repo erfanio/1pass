@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/erfanio/1pass/ui"
 	"github.com/therecipe/qt/core"
 	"strings"
 )
@@ -10,13 +11,19 @@ var (
 	filtered   []partialItem
 )
 
-func populateList(items []partialItem) {
-	unfiltered = items
-	ui.Search.EnableAndFocus()
+func setupList() {
+	ui.App.Search.SetTextChanged(filter)
+	ui.App.Search.SetListDataProviders(listData, listCount)
 }
 
+func populateList(items []partialItem) {
+	unfiltered = items
+	ui.App.Search.EnableAndFocus()
+}
+
+// filter will search the list of items for matches that show up in the list
 func filter(text string) {
-	ui.Search.ListDataWillChange()
+	ui.App.Search.ListDataWillChange()
 	filtered = make([]partialItem, 0, len(unfiltered))
 
 	// don't bother filtering if text is empty, just hide the list
@@ -33,19 +40,19 @@ func filter(text string) {
 		}
 	}
 
-	ui.Search.ListDataDidChange()
-	ui.Search.UpdateSize()
+	ui.App.Search.ListDataDidChange()
+	ui.App.Search.UpdateSize()
 }
 
-// ListData will return the data for a row and role
-func ListData(row, role int) string {
+// listData will return the data for a row and role
+func listData(row, role int) string {
 	if row >= len(filtered) || role != int(core.Qt__DisplayRole) {
 		return ""
 	}
 	return filtered[row].Overview.Title
 }
 
-// ListCount will return the number of rows needed to display items
-func ListCount() int {
+// listCount will return the number of rows needed to display items
+func listCount() int {
 	return len(filtered)
 }

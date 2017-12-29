@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/erfanio/1pass/ui"
 	"github.com/therecipe/qt/core"
 	"log"
 	"os"
@@ -18,13 +19,15 @@ func main() {
 	// setup
 	settings = core.NewQSettings2(core.QSettings__UserScope, "erfan.io", "1pass", nil)
 
-	setupUI()
-	ui.Search.Start()
+	ui.SetupUI()
+	ui.App.Search.Start()
+	setupList()
+	setupLogin()
 
 	tryFetching()
 
 	// start app
-	ui.Exec()
+	ui.App.Exec()
 }
 
 func getSession() string {
