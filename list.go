@@ -12,7 +12,6 @@ var (
 
 func populateList(items []partialItem) {
 	unfiltered = items
-	setupModel()
 	ui.Search.EnableAndFocus()
 }
 
@@ -38,19 +37,15 @@ func filter(text string) {
 	ui.Search.UpdateSize()
 }
 
-// connect a list model to data and assign to list
-func setupModel() {
-	// model needs to be created on gui thread
-	ui.Search.SetupListModel(
-		func(row, role int) string {
-			// out of range
-			if row >= len(filtered) || role != int(core.Qt__DisplayRole) {
-				return ""
-			}
-			return filtered[row].Overview.Title
-		},
-		func() int {
-			return len(filtered)
-		},
-	)
+// ListData will return the data for a row and role
+func ListData(row, role int) string {
+	if row >= len(filtered) || role != int(core.Qt__DisplayRole) {
+		return ""
+	}
+	return filtered[row].Overview.Title
+}
+
+// ListCount will return the number of rows needed to display items
+func ListCount() int {
+	return len(filtered)
 }

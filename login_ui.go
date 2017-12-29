@@ -41,13 +41,13 @@ QPushButton:hover {
 type LoginUI struct {
 	widgets.QDialog
 
-	_ func()                               `slots:"Show"`
-	_ func()                               `slots:"Hide"`
-	_ func()                               `slots:"Disable"`
-	_ func()                               `slots:"Enable"`
-	_ func(bool)                           `slots:"SetDisabled"`
-	_ func(string, string, string, string) `slots:"SetInputTexts"`
-	_ func(string)                         `slots:"ShowError"`
+	// start/finish because show/hide would collide with QDialog's show/hide
+	_ func()                               `slot:"Start"`
+	_ func()                               `slot:"Finish"`
+	_ func()                               `slot:"Disable"`
+	_ func()                               `slot:"Enable"`
+	_ func(string, string, string, string) `slot:"SetInputTexts"`
+	_ func(string)                         `slot:"ShowError"`
 
 	Layout      *widgets.QVBoxLayout
 	Domain      *widgets.QLineEdit
@@ -59,6 +59,7 @@ type LoginUI struct {
 }
 
 func setupLogin() *LoginUI {
+	println(core.QThread_CurrentThread().Pointer())
 	// create the window
 	w := NewLoginUI(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
 	w.SetWindowTitle("Login")
@@ -104,53 +105,54 @@ func setupLogin() *LoginUI {
 }
 
 func (w *LoginUI) setupEventListeners() {
-	// set width hint
+	// set sizes
 	w.ConnectSizeHint(func() *core.QSize {
 		return core.NewQSize2(loginWidth, w.SizeHintDefault().Height())
 	})
-
 	w.Button.ConnectSizeHint(func() *core.QSize {
 		return core.NewQSize2(loginButtonWidth, loginButtonHeight)
 	})
 
-	// focus on first empty input
-	w.ConnectShowEvent(func(event *gui.QShowEvent) {
-		// a list of inputs in order
-		inputs := []*widgets.QLineEdit{w.Domain, w.Email, w.Key, w.Password}
-
-		for i := range inputs {
-			input := inputs[i]
-			if input.Text() == "" {
-				input.SetFocus(core.Qt__NoFocusReason)
-				return
-			}
-		}
-	})
-
+	w.ConnectShowEvent(w.focusInput)
 	// close the app if login is rejected (esc key)
 	w.ConnectRejected(func() {
 		ui.Quit()
 	})
-
 	// listen for form submission
 	w.Button.ConnectClicked(func(checked bool) {
 		println(core.QThread_CurrentThread().Pointer())
 		submitLogin(w.Domain.Text(), w.Email.Text(), w.Key.Text(), w.Password.Text())
 	})
+
+	// Setup slots
+	w.ConnectStart(func() {
+		w.Show()
+	})
+	w.ConnectFinish(func() {
+		w.Hide()
+	})
+	w.ConnectEnable(w.enable)
+	w.ConnectDisable(w.disable)
+	w.ConnectSetInputTexts(w.setInputTexts)
+	w.ConnectShowError(w.showError)
 }
 
-// Show shows the login dialog
-func (w *LoginUI) Show() {
-	w.QDialog.Show()
+// focusInput focuses on the first empty input
+func (w *LoginUI) focusInput(event *gui.QShowEvent) {
+	// a list of inputs in order
+	inputs := []*widgets.QLineEdit{w.Domain, w.Email, w.Key, w.Password}
+
+	for i := range inputs {
+		input := inputs[i]
+		if input.Text() == "" {
+			input.SetFocus(core.Qt__NoFocusReason)
+			return
+		}
+	}
 }
 
-// Hide hides the login dialog
-func (w *LoginUI) Hide() {
-	w.QDialog.Hide()
-}
-
-// SetDisabled sets the disabled state of the dialog components (inputs, button)
-func (w *LoginUI) SetDisabled(disabled bool) {
+// setDisabled sets the disabled state of the dialog components (inputs, button)
+func (w *LoginUI) setDisabled(disabled bool) {
 	w.Domain.SetDisabled(disabled)
 	w.Email.SetDisabled(disabled)
 	w.Key.SetDisabled(disabled)
@@ -158,22 +160,22 @@ func (w *LoginUI) SetDisabled(disabled bool) {
 	w.Button.SetDisabled(disabled)
 }
 
-// Enable is a shortcut for SetDisabled(false) and setting cursor back to default
-func (w *LoginUI) Enable() {
-	w.SetDisabled(false)
+// enable is a shortcut for SetDisabled(false) and setting cursor back to default
+func (w *LoginUI) enable() {
+	w.setDisabled(false)
 	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
 	w.SetCursor(cursor)
 }
 
-// Disable is a shortcut for SetDisabled(true) and setting cursor to wait
-func (w *LoginUI) Disable() {
-	w.SetDisabled(true)
+// disable is a shortcut for SetDisabled(true) and setting cursor to wait
+func (w *LoginUI) disable() {
+	w.setDisabled(true)
 	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
 	w.SetCursor(cursor)
 }
 
-// SetInputTexts sets the text in the inputs (if string is empty will not override previous state)
-func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
+// setInputTexts sets the text in the inputs (if string is empty will not override previous state)
+func (w *LoginUI) setInputTexts(domain, email, key, password string) {
 	if len(domain) > 0 {
 		w.Domain.SetText(domain)
 	}
@@ -188,8 +190,9 @@ func (w *LoginUI) SetInputTexts(domain, email, key, password string) {
 	}
 }
 
-// ShowError will display a dismissable error dialog with a message
-func (w *LoginUI) ShowError(msg string) {
+// showError will display a dismissable error dialog with a message
+func (w *LoginUI) showError(msg string) {
+	println(core.QThread_CurrentThread().Pointer())
 	w.ErrorDialog.ShowMessage(msg)
 	w.ErrorDialog.Exec()
 }

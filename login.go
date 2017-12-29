@@ -16,7 +16,7 @@ func promptLogin() {
 		settings.Value("key", core.NewQVariant17("")).ToString(),
 		"")
 
-	ui.Login.Show()
+	ui.Login.Start()
 }
 
 func submitLogin(domain, email, key, password string) {
@@ -42,7 +42,7 @@ func submitLogin(domain, email, key, password string) {
 			// show error (and the stderr) in a dialog
 			ui.Login.ShowError(msg)
 		} else {
-			ui.Login.Hide()
+			ui.Login.Finish()
 
 			// save session (valid for 30 min)
 			session := strings.TrimSpace(string(out))

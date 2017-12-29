@@ -48,13 +48,15 @@ const searchStyles = `
 type SearchUI struct {
 	widgets.QWidget
 
-	_ func()                                  `slots:"UpdateSize"`
-	_ func()                                  `slots:"Show"`
-	_ func()                                  `slots:"Hide"`
-	_ func(func(int, int) string, func() int) `slots:"SetupListModel"`
-	_ func()                                  `slots:"ListDataWillChange`
-	_ func()                                  `slots:"ListDataDidChange`
-	_ func()                                  `slots:"EnableAndFocus`
+	// start/finish because show/hide would collide with QWidget's show/hide
+	_ func()                `slot:"Start"`
+	_ func()                `slot:"Finish"`
+	_ func()                `slot:"UpdateSize"`
+	_ func()                `slot:"ListDataWillChange`
+	_ func()                `slot:"ListDataDidChange`
+	_ func()                `slot:"EnableAndFocus`
+	_ func(int, int) string `slot:"ListData"`
+	_ func() int            `slot:"ListCount"`
 
 	WindowLayout *widgets.QVBoxLayout
 	InnerWindow  *widgets.QFrame
@@ -120,9 +122,6 @@ func setupSearch() *SearchUI {
 
 	// model for the list to provide data
 	w.ListModel = core.NewQAbstractListModel(nil)
-	w.ListModel.ConnectFlags(func(index *core.QModelIndex) core.Qt__ItemFlag {
-		return core.Qt__ItemIsSelectable | core.Qt__ItemIsEnabled
-	})
 	w.List.SetModel(w.ListModel)
 
 	w.setupEventListeners()
@@ -130,10 +129,17 @@ func setupSearch() *SearchUI {
 }
 
 func (w *SearchUI) setupEventListeners() {
-	// set width hint
+	// set size hint
 	w.Input.ConnectSizeHint(func() *core.QSize {
 		return core.NewQSize2(searchWidth, w.Input.SizeHintDefault().Height())
 	})
+	w.Item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
+		return core.NewQSize2(w.Item.SizeHintDefault(option, index).Width(), resultHeight)
+	})
+	w.List.ConnectMinimumSizeHint(func() *core.QSize {
+		return core.NewQSize2(0, 0)
+	})
+	w.List.ConnectSizeHint(w.listSize)
 
 	// exit on esc
 	w.Input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
@@ -142,26 +148,6 @@ func (w *SearchUI) setupEventListeners() {
 		} else {
 			w.Input.KeyPressEventDefault(event)
 		}
-	})
-
-	w.Item.ConnectSizeHint(func(option *widgets.QStyleOptionViewItem, index *core.QModelIndex) *core.QSize {
-		return core.NewQSize2(w.Item.SizeHintDefault(option, index).Width(), resultHeight)
-	})
-	w.List.ConnectMinimumSizeHint(func() *core.QSize {
-		return core.NewQSize2(0, 0)
-	})
-	// size of the list (don't let the list grow bigger than maxResults items)
-	w.List.ConnectSizeHint(func() *core.QSize {
-		rowSize := w.List.SizeHintForRow(0)
-		// -1 when hidden should be 0
-		if rowSize < 0 {
-			rowSize = 0
-		}
-		count := w.List.Model().RowCount(core.NewQModelIndex())
-		if count > maxResults {
-			count = maxResults
-		}
-		return core.NewQSize2(w.List.SizeHintDefault().Width(), resultHeight*count)
 	})
 
 	// make window draggable
@@ -186,10 +172,55 @@ func (w *SearchUI) setupEventListeners() {
 			w.Input.ChangeEventDefault(event)
 		}
 	})
+
+	w.ListModel.ConnectFlags(func(index *core.QModelIndex) core.Qt__ItemFlag {
+		return core.Qt__ItemIsSelectable | core.Qt__ItemIsEnabled
+	})
+	// setup list data
+	w.ListModel.ConnectData(func(index *core.QModelIndex, role int) *core.QVariant {
+		if strData := ListData(index.Row(), role); strData != "" {
+			return core.NewQVariant17(strData)
+		}
+		return core.NewQVariant()
+	})
+	w.ListModel.ConnectRowCount(func(parent *core.QModelIndex) int {
+		return ListCount()
+	})
+
+	// setup slots
+	w.ConnectStart(func() {
+		w.Show()
+	})
+	w.ConnectFinish(func() {
+		w.Hide()
+	})
+	w.ConnectUpdateSize(w.updateSize)
+	w.ConnectListDataWillChange(func() {
+		w.ListModel.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
+	})
+	w.ConnectListDataDidChange(func() {
+		w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
+	})
+	w.ConnectEnableAndFocus(w.enableAndFocus)
 }
 
-// UpdateSize updates the size of the list (auto hides if list model is empty)
-func (w *SearchUI) UpdateSize() {
+// listSize will calcualte the size hint of the list (height only) based on number of items
+// this will cap the size of the list to a maximum number of items
+func (w *SearchUI) listSize() *core.QSize {
+	rowSize := w.List.SizeHintForRow(0)
+	// -1 when hidden should be 0
+	if rowSize < 0 {
+		rowSize = 0
+	}
+	count := w.List.Model().RowCount(core.NewQModelIndex())
+	if count > maxResults {
+		count = maxResults
+	}
+	return core.NewQSize2(w.List.SizeHintDefault().Width(), resultHeight*count)
+}
+
+// updateSize updates the size of the list (auto hides if list model is empty)
+func (w *SearchUI) updateSize() {
 	count := w.List.Model().RowCount(core.NewQModelIndex())
 	// hide if no items in the list
 	if count > 0 {
@@ -207,48 +238,9 @@ func (w *SearchUI) UpdateSize() {
 	}
 }
 
-// Show shows the search popup
-func (w *SearchUI) Show() {
-	w.QWidget.Show()
-}
-
-// Hide hides the search popup
-func (w *SearchUI) Hide() {
-	w.QWidget.Hide()
-}
-
-// SetupListModel will set a new model to list and setup two listeners provides for
-// data and row count
-func (w *SearchUI) SetupListModel(row func(int, int) string, count func() int) {
-	w.ListDataWillChange()
-
-	w.ListModel.ConnectData(func(index *core.QModelIndex, role int) *core.QVariant {
-		strData := row(index.Row(), role)
-		if strData != "" {
-			return core.NewQVariant17(strData)
-		}
-		return core.NewQVariant()
-	})
-	w.ListModel.ConnectRowCount(func(parent *core.QModelIndex) int {
-		return count()
-	})
-
-	w.ListDataDidChange()
-}
-
-// ListDataWillChange notifies the model data is going to change
-func (w *SearchUI) ListDataWillChange() {
-	w.ListModel.LayoutAboutToBeChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
-}
-
-// ListDataDidChange notifies the model data has changed
-func (w *SearchUI) ListDataDidChange() {
-	w.ListModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
-}
-
-// EnableAndFocus will enable the input which will trigger a
+// enableAndFocus will enable the input which will trigger a
 // listener that wll focus the input when it is enabled
-func (w *SearchUI) EnableAndFocus() {
+func (w *SearchUI) enableAndFocus() {
 	w.Input.SetDisabled(false)
 	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
 	w.SetCursor(cursor)

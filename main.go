@@ -19,7 +19,7 @@ func main() {
 	settings = core.NewQSettings2(core.QSettings__UserScope, "erfan.io", "1pass", nil)
 
 	setupUI()
-	ui.Search.Show()
+	ui.Search.Start()
 
 	tryFetching()
 
