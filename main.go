@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"github.com/erfanio/1pass/ui"
 	"github.com/therecipe/qt/core"
-	"log"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 var (
@@ -22,7 +18,7 @@ func main() {
 	ui.SetupUI()
 	ui.App.Search.Start()
 	setupList()
-	setupLogin()
+	ui.App.Login.SetLoginListener(submitLogin)
 
 	tryFetching()
 
@@ -30,32 +26,14 @@ func main() {
 	ui.App.Exec()
 }
 
-func getSession() string {
-	// get logged in session env
-	domain := settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString()
-	subdomain := strings.Split(domain, ".")[0]
-	sessionKey := settings.Value("session_key", core.NewQVariant17("")).ToString()
-	// e.g. OP_SESSION_my=abcdefg
-	return fmt.Sprintf("OP_SESSION_%v=%v", subdomain, sessionKey)
-}
+// show the login form
+func promptLogin() {
+	// populate form with previously stored info
+	ui.App.Login.SetInputTexts(
+		settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString(),
+		settings.Value("email", core.NewQVariant17("")).ToString(),
+		settings.Value("key", core.NewQVariant17("")).ToString(),
+		"")
 
-func tryFetching() {
-	// if logged in, session will let us send queries for 30 min
-	session := getSession()
-
-	go func() {
-		// get list of item summaries from 1pass's cli
-		cmd := exec.Command("/bin/op", "list", "items")
-		cmd.Env = append(os.Environ(), session)
-		output, err := cmd.Output()
-
-		// login if error (probably not logged in)
-		if err != nil {
-			log.Print(err)
-			promptLogin()
-		} else {
-			items := json2list(output)
-			populateList(items)
-		}
-	}()
+	ui.App.Login.Start()
 }

@@ -13,7 +13,7 @@ var (
 
 func setupList() {
 	ui.App.Search.SetTextChanged(filter)
-	ui.App.Search.SetListDataProviders(listData, listCount)
+	ui.App.Search.SetListDataProviders(listData, listCount, fetchAndCopy, fetchAndOpen)
 }
 
 func populateList(items []partialItem) {
@@ -55,4 +55,46 @@ func listData(row, role int) string {
 // listCount will return the number of rows needed to display items
 func listCount() int {
 	return len(filtered)
+}
+
+// fetchAndCopy
+func fetchAndCopy(row int) {
+	fetchDetails(filtered[row].UUID, func(item completeItem) {
+		for _, f := range item.Details.Fields {
+			if f.Name == "password" {
+				ui.App.Search.Copy(f.Value)
+				return
+			}
+		}
+	})
+}
+
+// fetchAndOpen
+func fetchAndOpen(row int) {
+	fetchDetails(filtered[row].UUID, func(item completeItem) {
+		values := make(map[string]map[string]string)
+
+		const info = "Info"
+		values[info] = make(map[string]string)
+		values[info]["Additional Info"] = item.Overview.AdditionalInfo
+		values[info]["Title"] = item.Overview.Title
+		values[info]["URL"] = item.Overview.URL
+
+		// main fields
+		const main = "Main"
+		values[main] = make(map[string]string)
+		for _, f := range item.Details.Fields {
+			values[main][f.Name] = f.Value
+		}
+
+		// all fields in all sections
+		for _, s := range item.Details.Sections {
+			values[s.Name] = make(map[string]string)
+			for _, f := range s.Fields {
+				values[s.Name][f.Name] = f.Value
+			}
+		}
+
+		ui.App.Search.Open(values)
+	})
 }

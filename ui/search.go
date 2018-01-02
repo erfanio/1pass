@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
@@ -48,13 +49,16 @@ const searchStyles = `
 type SearchUI struct {
 	widgets.QWidget
 
-	_ func() `constructor:"init"`
-	_ func() `slot:"Start"` // start/finish because show/hide would collide with QWidget's show/hide
-	_ func() `slot:"Finish"`
-	_ func() `slot:"UpdateSize"`
-	_ func() `slot:"ListDataWillChange`
-	_ func() `slot:"ListDataDidChange`
-	_ func() `slot:"EnableAndFocus`
+	_ func()                             `constructor:"init"`
+	_ func()                             `slot:"Start"` // start/finish because show/hide would collide with QWidget's show/hide
+	_ func()                             `slot:"Finish"`
+	_ func()                             `slot:"UpdateSize"`
+	_ func()                             `slot:"ListDataWillChange`
+	_ func()                             `slot:"ListDataDidChange`
+	_ func()                             `slot:"Disable`
+	_ func()                             `slot:"EnableAndFocus`
+	_ func(string)                       `slot:"Copy`
+	_ func(map[string]map[string]string) `slot:"Open`
 
 	windowLayout *widgets.QVBoxLayout
 	innerWindow  *widgets.QFrame
@@ -67,6 +71,8 @@ type SearchUI struct {
 	listData    func(int, int) string
 	listCount   func() int
 	textChanged func(string)
+	copyItem    func(int)
+	openItem    func(int)
 }
 
 func (w *SearchUI) init() {
@@ -134,15 +140,6 @@ func (w *SearchUI) init() {
 	})
 	w.list.ConnectSizeHint(w.listSize)
 
-	// exit on esc
-	w.input.ConnectKeyPressEvent(func(event *gui.QKeyEvent) {
-		if event.Key() == int(core.Qt__Key_Escape) {
-			App.Quit()
-		} else {
-			w.input.KeyPressEventDefault(event)
-		}
-	})
-
 	// make window draggable
 	var xOffset, yOffset int
 	w.ConnectMousePressEvent(func(event *gui.QMouseEvent) {
@@ -153,6 +150,8 @@ func (w *SearchUI) init() {
 		w.Move2(event.GlobalX()-xOffset, event.GlobalY()-yOffset)
 	})
 
+	w.input.ConnectKeyPressEvent(w.keyListener)
+	w.input.ConnectReturnPressed(w.returnListener)
 	w.input.ConnectTextChanged(func(text string) {
 		if w.textChanged != nil {
 			w.textChanged(text)
@@ -201,16 +200,67 @@ func (w *SearchUI) init() {
 	w.ConnectListDataDidChange(func() {
 		w.listModel.LayoutChanged(nil, core.QAbstractItemModel__NoLayoutChangeHint)
 	})
+	w.ConnectDisable(w.disable)
 	w.ConnectEnableAndFocus(w.enableAndFocus)
+	w.ConnectCopy(func(value string) {
+		App.Clipboard().SetText(value, gui.QClipboard__Clipboard)
+	})
+	w.ConnectOpen(func(details map[string]map[string]string) {
+		for section, fields := range details {
+			fmt.Println(section)
+			for field, value := range fields {
+				fmt.Printf("  %v: %v\n", field, value)
+			}
+		}
+	})
 }
 
-func (w *SearchUI) SetListDataProviders(data func(int, int) string, count func() int) {
+func (w *SearchUI) SetListDataProviders(data func(int, int) string, count func() int, copy func(int), open func(int)) {
 	w.listData = data
 	w.listCount = count
+	w.copyItem = copy
+	w.openItem = open
 }
 
 func (w *SearchUI) SetTextChanged(f func(string)) {
 	w.textChanged = f
+}
+
+// keyListener will listen for special keys to handle specially, otherwise will call default event handler
+// esc will quit, up/down will move list selection
+func (w *SearchUI) keyListener(event *gui.QKeyEvent) {
+	if event.Key() == int(core.Qt__Key_Escape) {
+		App.Quit()
+	} else if event.Key() == int(core.Qt__Key_Down) || event.Key() == int(core.Qt__Key_Up) {
+		row := w.list.CurrentIndex().Row()
+		if event.Key() == int(core.Qt__Key_Down) {
+			row += 1
+		} else if event.Key() == int(core.Qt__Key_Up) {
+			row -= 1
+		}
+		rowIndex := w.listModel.Index(row, 0, w.list.RootIndex())
+		// valid means the index isn't out of range
+		if rowIndex.IsValid() {
+			w.list.SetCurrentIndex(rowIndex)
+		}
+	} else if event.Key() == int(core.Qt__Key_C) && (event.Modifiers()&core.Qt__ControlModifier != 0) {
+		indexes := w.list.SelectedIndexes()
+		if len(indexes) > 0 {
+			selected := indexes[0].Row()
+			w.copyItem(selected)
+		}
+	} else {
+		w.input.KeyPressEventDefault(event)
+	}
+}
+
+// returnListener will respond to enter key, opens details for an item
+func (w *SearchUI) returnListener() {
+	indexes := w.list.SelectedIndexes()
+	if len(indexes) > 0 {
+		selected := indexes[0].Row()
+		w.openItem(selected)
+	}
 }
 
 // listSize will calcualte the size hint of the list (height only) based on number of items
@@ -247,10 +297,17 @@ func (w *SearchUI) updateSize() {
 	}
 }
 
+// disable will disable the input
+func (w *SearchUI) disable() {
+	w.input.SetEnabled(false)
+	cursor := gui.NewQCursor2(core.Qt__WaitCursor)
+	w.SetCursor(cursor)
+}
+
 // enableAndFocus will enable the input which will trigger a
 // listener that wll focus the input when it is enabled
 func (w *SearchUI) enableAndFocus() {
-	w.input.SetDisabled(false)
+	w.input.SetEnabled(true)
 	cursor := gui.NewQCursor2(core.Qt__ArrowCursor)
 	w.SetCursor(cursor)
 }

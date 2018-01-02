@@ -54,3 +54,11 @@ func json2list(rawData []byte) (items []partialItem) {
 	}
 	return
 }
+
+func json2item(rawData []byte) (item completeItem) {
+	err := json.Unmarshal(rawData, &item)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return
+}
