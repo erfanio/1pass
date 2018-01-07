@@ -89,9 +89,9 @@ func fetchAndOpen(row int) {
 
 		// all fields in all sections
 		for _, s := range item.Details.Sections {
-			values[s.Name] = make(map[string]string)
+			values[s.Title] = make(map[string]string)
 			for _, f := range s.Fields {
-				values[s.Name][f.Name] = f.Value
+				values[s.Title][f.Title] = f.Value
 			}
 		}
 
