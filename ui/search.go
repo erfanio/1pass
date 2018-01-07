@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
@@ -49,16 +48,15 @@ const searchStyles = `
 type SearchUI struct {
 	widgets.QWidget
 
-	_ func()                             `constructor:"init"`
-	_ func()                             `slot:"Start"` // start/finish because show/hide would collide with QWidget's show/hide
-	_ func()                             `slot:"Finish"`
-	_ func()                             `slot:"UpdateSize"`
-	_ func()                             `slot:"ListDataWillChange`
-	_ func()                             `slot:"ListDataDidChange`
-	_ func()                             `slot:"Disable`
-	_ func()                             `slot:"EnableAndFocus`
-	_ func(string)                       `slot:"Copy`
-	_ func(map[string]map[string]string) `slot:"Open`
+	_ func()       `constructor:"init"`
+	_ func()       `slot:"Start"` // start/finish because show/hide would collide with QWidget's show/hide
+	_ func()       `slot:"Finish"`
+	_ func()       `slot:"UpdateSize"`
+	_ func()       `slot:"ListDataWillChange`
+	_ func()       `slot:"ListDataDidChange`
+	_ func()       `slot:"Disable`
+	_ func()       `slot:"EnableAndFocus`
+	_ func(string) `slot:"Copy`
 
 	windowLayout *widgets.QVBoxLayout
 	innerWindow  *widgets.QFrame
@@ -204,14 +202,6 @@ func (w *SearchUI) init() {
 	w.ConnectEnableAndFocus(w.enableAndFocus)
 	w.ConnectCopy(func(value string) {
 		App.Clipboard().SetText(value, gui.QClipboard__Clipboard)
-	})
-	w.ConnectOpen(func(details map[string]map[string]string) {
-		for section, fields := range details {
-			fmt.Println(section)
-			for field, value := range fields {
-				fmt.Printf("  %v: %v\n", field, value)
-			}
-		}
 	})
 }
 

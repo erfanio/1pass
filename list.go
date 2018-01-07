@@ -95,6 +95,6 @@ func fetchAndOpen(row int) {
 			}
 		}
 
-		ui.App.Search.Open(values)
+		ui.App.Details.Start(item.Overview.Title, values)
 	})
 }

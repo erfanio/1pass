@@ -12,8 +12,9 @@ var App *UI
 type UI struct {
 	widgets.QApplication
 
-	Search *SearchUI
-	Login  *LoginUI
+	Search  *SearchUI
+	Login   *LoginUI
+	Details *DetailsUI
 }
 
 func SetupUI() {
@@ -26,4 +27,5 @@ func SetupUI() {
 		core.Qt__WindowCloseButtonHint|
 		core.Qt__WindowStaysOnTopHint)
 	App.Login = NewLoginUI(nil, core.Qt__Tool|core.Qt__WindowStaysOnTopHint)
+	App.Details = NewDetailsUI(nil, 0)
 }
