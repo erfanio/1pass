@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/erfanio/1pass/ui"
-	"github.com/therecipe/qt/core"
 	"strings"
 )
 
@@ -46,10 +45,17 @@ func filter(text string) {
 
 // listData will return the data for a row and role
 func listData(row, role int) string {
-	if row >= len(filtered) || role != int(core.Qt__DisplayRole) {
+	if row >= len(filtered) {
 		return ""
 	}
-	return filtered[row].Overview.Title
+
+	if role == ui.TitleRole {
+		return filtered[row].Overview.Title
+	}
+	if role == ui.SubtitleRole {
+		return filtered[row].Overview.AdditionalInfo
+	}
+	return ""
 }
 
 // listCount will return the number of rows needed to display items

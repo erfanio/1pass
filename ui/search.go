@@ -12,6 +12,11 @@ const (
 	searchInputHeight = 50
 	resultHeight      = 50
 	maxResults        = 5
+	titleSize         = 18
+	subtitleSize      = 12
+
+	TitleRole    = 1
+	SubtitleRole = 2
 )
 
 const searchStyles = `
@@ -184,6 +189,8 @@ func (w *SearchUI) init() {
 		return 0
 	})
 
+	w.item.ConnectPaint(w.paint)
+
 	// setup slots
 	w.ConnectStart(func() {
 		w.Show()
@@ -266,6 +273,63 @@ func (w *SearchUI) listSize() *core.QSize {
 		count = maxResults
 	}
 	return core.NewQSize2(w.list.SizeHintDefault().Width(), resultHeight*count)
+}
+
+// paint will draw a title and subtitle on to a row
+func (w *SearchUI) paint(painter *gui.QPainter, option *widgets.QStyleOptionViewItem, index *core.QModelIndex) {
+	painter.Save()
+	w.item.InitStyleOption(option, index)
+
+	// highlighted rows are different
+	var palette gui.QPalette__ColorRole
+	if (option.State() & widgets.QStyle__State_Selected) != 0 {
+		palette = gui.QPalette__HighlightedText
+		// paint highlighted item
+		painter.FillRect3(option.Rect(), option.Palette().Highlight())
+	} else {
+		palette = gui.QPalette__WindowText
+	}
+
+	// fonts are measured to get the total height of the center area
+	titleFont := option.Font()
+	titleFont.SetPixelSize(titleSize)
+	titleFm := gui.NewQFontMetrics(titleFont)
+	subtitleFont := option.Font()
+	subtitleFont.SetPixelSize(subtitleSize)
+	subtitleFm := gui.NewQFontMetrics(subtitleFont)
+
+	rect := option.Rect()
+	rect.SetLeft(rect.Left() + 5)
+	// calculate the top of a centered box
+	rect.SetTop(rect.Top() + rect.Height()/2 - (titleFm.Height()+subtitleFm.Height()+2)/2)
+
+	// paint the text elided (... if too long)
+	painter.SetFont(titleFont)
+	title := titleFm.ElidedText(index.Data(TitleRole).ToString(), option.TextElideMode(), rect.Width(), 0)
+	option.Widget().Style().DrawItemText(
+		painter,
+		rect,
+		int(core.Qt__AlignTop&core.Qt__AlignLeft),
+		option.Palette(),
+		option.State()&widgets.QStyle__State_Enabled != 0,
+		title,
+		palette,
+	)
+
+	rect.SetTop(rect.Top() + titleFm.Height() + 2)
+	painter.SetFont(subtitleFont)
+	subtitle := subtitleFm.ElidedText(index.Data(SubtitleRole).ToString(), option.TextElideMode(), rect.Width(), 0)
+	option.Widget().Style().DrawItemText(
+		painter,
+		rect,
+		int(core.Qt__AlignTop&core.Qt__AlignLeft),
+		option.Palette(),
+		option.State()&widgets.QStyle__State_Enabled != 0,
+		subtitle,
+		palette,
+	)
+
+	painter.Restore()
 }
 
 // updateSize updates the size of the list (auto hides if list model is empty)
