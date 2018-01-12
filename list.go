@@ -80,18 +80,19 @@ func fetchAndOpen(row int) {
 	fetchDetails(filtered[row].UUID, func(item completeItem) {
 		values := make(map[string]map[string]string)
 
-		const info = "Info"
+		const info = "Overview"
 		values[info] = make(map[string]string)
 		values[info]["Additional Info"] = item.Overview.AdditionalInfo
 		values[info]["Title"] = item.Overview.Title
 		values[info]["URL"] = item.Overview.URL
 
 		// main fields
-		const main = "Main"
+		const main = "Details"
 		values[main] = make(map[string]string)
 		for _, f := range item.Details.Fields {
 			values[main][f.Name] = f.Value
 		}
+		values[main]["Notes"] = item.Details.Notes
 
 		// all fields in all sections
 		for _, s := range item.Details.Sections {

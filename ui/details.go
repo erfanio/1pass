@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/therecipe/qt/core"
+	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
 )
 
@@ -28,10 +29,15 @@ func (w *DetailsUI) init() {
 
 func (w *DetailsUI) clear() {
 }
-
-func makeLabel(text string) *widgets.QLabel {
+func makeLabel(text string, bold bool) *widgets.QLabel {
 	label := widgets.NewQLabel2(text, nil, core.Qt__Widget)
 	label.SetTextInteractionFlags(core.Qt__TextSelectableByMouse)
+	if bold {
+		font := gui.NewQFont()
+		font.SetPixelSize(14)
+		font.SetBold(true)
+		label.SetFont(font)
+	}
 	return label
 }
 
@@ -48,7 +54,7 @@ func (w *DetailsUI) start(title string, data map[string]map[string]string) {
 
 	for section, fields := range data {
 		w.layout.AddWidget(
-			makeLabel(section),
+			makeLabel(section, true),
 			w.layout.RowCount(),
 			1,
 			core.Qt__AlignLeft,
@@ -57,16 +63,16 @@ func (w *DetailsUI) start(title string, data map[string]map[string]string) {
 		for field, value := range fields {
 			row := w.layout.RowCount()
 			w.layout.AddWidget(
-				makeLabel(field),
+				makeLabel(field, false),
 				row,
 				0,
-				core.Qt__AlignRight,
+				core.Qt__AlignRight|core.Qt__AlignTop,
 			)
 			w.layout.AddWidget(
-				makeLabel(value),
+				makeLabel(value, false),
 				row,
 				1,
-				core.Qt__AlignLeft,
+				core.Qt__AlignLeft|core.Qt__AlignTop,
 			)
 		}
 	}
