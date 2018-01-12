@@ -11,13 +11,34 @@ const (
 	titleTemplate = "Details for %v"
 )
 
+type DetailsItem struct {
+	Title    string
+	URL      string
+	Username string
+	Password string
+	Notes    string
+	Sections []DetailsSection
+	Fields   []DetailsField
+}
+
+type DetailsSection struct {
+	Title  string
+	Fields []DetailsField
+}
+
+type DetailsField struct {
+	Title string
+	Value string
+}
+
 type DetailsUI struct {
 	widgets.QDialog
 
-	_ func()                                     `constructor:"init"`
-	_ func(string, map[string]map[string]string) `slot:"Start"`
+	_ func()       `constructor:"init"`
+	_ func(string) `slot:"Start"`
 
-	layout *widgets.QGridLayout
+	layout   *widgets.QGridLayout
+	itemData func() DetailsItem
 }
 
 func (w *DetailsUI) init() {
@@ -27,8 +48,10 @@ func (w *DetailsUI) init() {
 	w.ConnectStart(w.start)
 }
 
-func (w *DetailsUI) clear() {
+func (w *DetailsUI) SetDataProvider(f func() DetailsItem) {
+	w.itemData = f
 }
+
 func makeLabel(text string, bold bool) *widgets.QLabel {
 	label := widgets.NewQLabel2(text, nil, core.Qt__Widget)
 	label.SetTextInteractionFlags(core.Qt__TextSelectableByMouse)
@@ -41,7 +64,23 @@ func makeLabel(text string, bold bool) *widgets.QLabel {
 	return label
 }
 
-func (w *DetailsUI) start(title string, data map[string]map[string]string) {
+func (w *DetailsUI) createRow(key, value string) {
+	row := w.layout.RowCount()
+	w.layout.AddWidget(
+		makeLabel(key, false),
+		row,
+		0,
+		core.Qt__AlignRight|core.Qt__AlignTop,
+	)
+	w.layout.AddWidget(
+		makeLabel(value, false),
+		row,
+		1,
+		core.Qt__AlignLeft|core.Qt__AlignTop,
+	)
+}
+
+func (w *DetailsUI) start(title string) {
 	// remove all the old widgets
 	for w.layout.Count() > 0 {
 		item := w.layout.TakeAt(0)
@@ -52,28 +91,30 @@ func (w *DetailsUI) start(title string, data map[string]map[string]string) {
 	// set the title
 	w.SetWindowTitle(fmt.Sprintf(titleTemplate, title))
 
-	for section, fields := range data {
-		w.layout.AddWidget(
-			makeLabel(section, true),
-			w.layout.RowCount(),
-			1,
-			core.Qt__AlignLeft,
-		)
+	data := w.itemData()
 
-		for field, value := range fields {
-			row := w.layout.RowCount()
+	w.createRow("Title", data.Title)
+	w.createRow("Username", data.Username)
+	w.createRow("Password", data.Password)
+	w.createRow("URL", data.URL)
+	w.createRow("Notes", data.Notes)
+	for _, field := range data.Fields {
+		w.createRow(field.Title, field.Value)
+	}
+
+	for _, section := range data.Sections {
+		// get rid of related items
+		if len(section.Fields) > 0 {
 			w.layout.AddWidget(
-				makeLabel(field, false),
-				row,
-				0,
-				core.Qt__AlignRight|core.Qt__AlignTop,
-			)
-			w.layout.AddWidget(
-				makeLabel(value, false),
-				row,
+				makeLabel(section.Title, true),
+				w.layout.RowCount(),
 				1,
-				core.Qt__AlignLeft|core.Qt__AlignTop,
+				core.Qt__AlignLeft,
 			)
+
+			for _, field := range section.Fields {
+				w.createRow(field.Title, field.Value)
+			}
 		}
 	}
 

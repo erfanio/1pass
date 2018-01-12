@@ -6,13 +6,15 @@ import (
 )
 
 var (
-	unfiltered []partialItem
-	filtered   []partialItem
+	unfiltered  []partialItem
+	filtered    []partialItem
+	detailsItem completeItem
 )
 
 func setupList() {
 	ui.App.Search.SetTextChanged(filter)
 	ui.App.Search.SetListDataProviders(listData, listCount, fetchAndCopy, fetchAndOpen)
+	ui.App.Details.SetDataProvider(detailsData)
 }
 
 func populateList(items []partialItem) {
@@ -75,33 +77,60 @@ func fetchAndCopy(row int) {
 	})
 }
 
+// detailsData will supply data to details page
+func detailsData() ui.DetailsItem {
+	// maybe set later
+	username := ""
+	password := ""
+
+	sections := make([]ui.DetailsSection, 0)
+	detailsFields := make([]ui.DetailsField, 0)
+
+	// details fields
+	for _, f := range detailsItem.Details.Fields {
+		if f.Name == "username" {
+			username = f.Value
+		} else if f.Name == "password" {
+			password = f.Value
+		} else {
+			detailsFields = append(detailsFields, ui.DetailsField{
+				Title: f.Name,
+				Value: f.Value,
+			})
+		}
+	}
+
+	// all fields in all sections
+	for _, s := range detailsItem.Details.Sections {
+		fields := make([]ui.DetailsField, 0)
+		for _, f := range s.Fields {
+			fields = append(fields, ui.DetailsField{
+				Title: f.Title,
+				Value: f.Value,
+			})
+		}
+		sections = append(sections, ui.DetailsSection{
+			Title:  s.Title,
+			Fields: fields,
+		})
+	}
+
+	return ui.DetailsItem{
+		Title:    detailsItem.Overview.Title,
+		URL:      detailsItem.Overview.URL,
+		Notes:    detailsItem.Details.Notes,
+		Username: username,
+		Password: password,
+		Fields:   detailsFields,
+		Sections: sections,
+	}
+}
+
 // fetchAndOpen
 func fetchAndOpen(row int) {
 	fetchDetails(filtered[row].UUID, func(item completeItem) {
-		values := make(map[string]map[string]string)
-
-		const info = "Overview"
-		values[info] = make(map[string]string)
-		values[info]["Additional Info"] = item.Overview.AdditionalInfo
-		values[info]["Title"] = item.Overview.Title
-		values[info]["URL"] = item.Overview.URL
-
-		// main fields
-		const main = "Details"
-		values[main] = make(map[string]string)
-		for _, f := range item.Details.Fields {
-			values[main][f.Name] = f.Value
-		}
-		values[main]["Notes"] = item.Details.Notes
-
-		// all fields in all sections
-		for _, s := range item.Details.Sections {
-			values[s.Title] = make(map[string]string)
-			for _, f := range s.Fields {
-				values[s.Title][f.Title] = f.Value
-			}
-		}
-
-		ui.App.Details.Start(item.Overview.Title, values)
+		// open and details will fetch data from getData
+		detailsItem = item
+		ui.App.Details.Start(item.Overview.Title)
 	})
 }
