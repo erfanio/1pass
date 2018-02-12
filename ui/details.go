@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"github.com/therecipe/qt/core"
-	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
 )
 
@@ -52,16 +51,10 @@ func (w *DetailsUI) SetDataProvider(f func() DetailsItem) {
 	w.itemData = f
 }
 
-func makeLabel(text string, bold bool) *widgets.QLabel {
-	label := widgets.NewQLabel2(text, nil, core.Qt__Widget)
-	label.SetTextInteractionFlags(core.Qt__TextSelectableByMouse)
-	if bold {
-		font := gui.NewQFont()
-		font.SetPixelSize(14)
-		font.SetBold(true)
-		label.SetFont(font)
-	}
-	return label
+func (w *DetailsUI) makeText(value string) *TextField {
+	text := NewTextField(w, 0)
+	text.SetText(value)
+	return text
 }
 
 func (w *DetailsUI) createRow(key, value string) {
@@ -73,7 +66,7 @@ func (w *DetailsUI) createRow(key, value string) {
 		core.Qt__AlignRight|core.Qt__AlignTop,
 	)
 	w.layout.AddWidget(
-		makeLabel(value, false),
+		w.makeText(value),
 		row,
 		1,
 		core.Qt__AlignLeft|core.Qt__AlignTop,

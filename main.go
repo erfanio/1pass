@@ -33,7 +33,7 @@ func promptLogin() {
 		settings.Value("domain", core.NewQVariant17("my.1password.com")).ToString(),
 		settings.Value("email", core.NewQVariant17("")).ToString(),
 		settings.Value("key", core.NewQVariant17("")).ToString(),
-		"")
-
+		"",
+	)
 	ui.App.Login.Start()
 }

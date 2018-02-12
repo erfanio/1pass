@@ -292,10 +292,10 @@ func (w *SearchUI) paint(painter *gui.QPainter, option *widgets.QStyleOptionView
 
 	// fonts are measured to get the total height of the center area
 	titleFont := option.Font()
-	titleFont.SetPixelSize(titleSize)
+	titleFont.SetPointSize(titleSize)
 	titleFm := gui.NewQFontMetrics(titleFont)
 	subtitleFont := option.Font()
-	subtitleFont.SetPixelSize(subtitleSize)
+	subtitleFont.SetPointSize(subtitleSize)
 	subtitleFm := gui.NewQFontMetrics(subtitleFont)
 
 	rect := option.Rect()
