@@ -14,7 +14,7 @@ const (
 )
 
 const loginStyles = `
-QLineEdit, QPushButton {
+QLineEdit, QPushButton, QLabel {
   font-size: 12px;
   background-color: #FFFFFF;
   border-width: 1px;

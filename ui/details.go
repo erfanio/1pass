@@ -6,6 +6,23 @@ import (
 	"github.com/therecipe/qt/widgets"
 )
 
+const DetailsStyles = `
+QLabel {
+	font-size: 12px;
+}
+
+QPushButton {
+	font-size: 8px;
+	border: 1px solid #cbcccd;
+	border-radius: 2px;
+	background: #ffffff;
+}
+
+QPushButton:pressed {
+	border: 1px solid #999999;
+	background: #cbcccd;
+}
+`
 const (
 	titleTemplate = "Details for %v"
 )
@@ -43,6 +60,7 @@ type DetailsUI struct {
 func (w *DetailsUI) init() {
 	w.layout = widgets.NewQGridLayout(nil)
 	w.SetLayout(w.layout)
+	w.SetStyleSheet(DetailsStyles)
 
 	w.ConnectStart(w.start)
 }

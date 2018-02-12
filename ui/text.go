@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/widgets"
 )
@@ -22,6 +23,14 @@ func (w *TextField) init() {
 	w.SetLayout(w.layout)
 
 	w.ConnectSetText(w.setText)
+	w.ConnectEnterEvent(func(event *core.QEvent) {
+		w.button.DisconnectPaintEvent()
+		w.button.Repaint()
+	})
+	w.ConnectLeaveEvent(func(event *core.QEvent) {
+		w.button.ConnectPaintEvent(ignorePaints)
+		w.button.Repaint()
+	})
 }
 
 func (w *TextField) setText(value string) {
@@ -32,5 +41,12 @@ func (w *TextField) setText(value string) {
 	w.button.ConnectClicked(func(checked bool) {
 		App.Clipboard().SetText(value, gui.QClipboard__Clipboard)
 	})
+	w.button.ConnectPaintEvent(ignorePaints)
+
+	rect := w.button.FontMetrics().BoundingRect2("Copy")
+	w.button.SetFixedSize(core.NewQSize2(rect.Width()+8, rect.Height()+2))
+
 	w.layout.AddWidget(w.button, 0, 0)
 }
+
+func ignorePaints(e *gui.QPaintEvent) {}

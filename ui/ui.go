@@ -34,11 +34,12 @@ func SetupUI() {
 func makeLabel(text string, bold bool) *widgets.QLabel {
 	label := widgets.NewQLabel2(text, nil, core.Qt__Widget)
 	label.SetTextInteractionFlags(core.Qt__TextSelectableByMouse)
+
 	if bold {
 		font := gui.NewQFont()
-		font.SetPointSize(14)
 		font.SetBold(true)
 		label.SetFont(font)
 	}
+
 	return label
 }
