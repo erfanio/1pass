@@ -65,6 +65,9 @@ func fetchDetails(UUID string, callback func(completeItem)) {
 
 func submitLogin(domain, email, key, password string) {
 	ui.App.Login.Disable()
+	settings.SetValue("domain", core.NewQVariant17(domain))
+	settings.SetValue("email", core.NewQVariant17(email))
+	settings.SetValue("key", core.NewQVariant17(key))
 
 	go func() {
 		// try to login and get the session token (raw outputs only the token)
