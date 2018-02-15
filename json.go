@@ -42,7 +42,7 @@ type section struct {
 }
 
 type sectionField struct {
-	Name  string `json:"n"`
+	Type  string `json:"k"`
 	Title string `json:"t"`
 	Value string `json:"v"`
 }

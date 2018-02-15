@@ -9,12 +9,13 @@ import (
 type TextField struct {
 	widgets.QWidget
 
-	_ func()       `constructor:"init"`
-	_ func(string) `slot:"SetText"`
+	_ func()             `constructor:"init"`
+	_ func(string, bool) `slot:"SetText"`
 
-	layout *widgets.QHBoxLayout
-	text   *widgets.QLabel
-	button *widgets.QPushButton
+	layout       *widgets.QHBoxLayout
+	text         *widgets.QLabel
+	copyButton   *widgets.QPushButton
+	revealButton *widgets.QPushButton
 }
 
 func (w *TextField) init() {
@@ -24,29 +25,53 @@ func (w *TextField) init() {
 
 	w.ConnectSetText(w.setText)
 	w.ConnectEnterEvent(func(event *core.QEvent) {
-		w.button.DisconnectPaintEvent()
-		w.button.Repaint()
+		w.copyButton.DisconnectPaintEvent()
+		w.copyButton.Repaint()
+
+		w.revealButton.DisconnectPaintEvent()
+		w.revealButton.Repaint()
 	})
 	w.ConnectLeaveEvent(func(event *core.QEvent) {
-		w.button.ConnectPaintEvent(ignorePaints)
-		w.button.Repaint()
+		w.copyButton.ConnectPaintEvent(ignorePaints)
+		w.copyButton.Repaint()
+
+		w.revealButton.ConnectPaintEvent(ignorePaints)
+		w.revealButton.Repaint()
 	})
 }
 
-func (w *TextField) setText(value string) {
-	w.text = makeLabel(value, false)
+func (w *TextField) setText(value string, hidden bool) {
+	displayValue := value
+	if hidden {
+		displayValue = "••••••••••"
+	}
+	w.text = makeLabel(displayValue, false)
 	w.layout.AddWidget(w.text, 0, 0)
 
-	w.button = widgets.NewQPushButton2("Copy", nil)
-	w.button.ConnectClicked(func(checked bool) {
+	w.copyButton = widgets.NewQPushButton2("Copy", nil)
+	w.copyButton.ConnectClicked(func(checked bool) {
 		App.Clipboard().SetText(value, gui.QClipboard__Clipboard)
 	})
-	w.button.ConnectPaintEvent(ignorePaints)
+	w.copyButton.ConnectPaintEvent(ignorePaints)
 
-	rect := w.button.FontMetrics().BoundingRect2("Copy")
-	w.button.SetFixedSize(core.NewQSize2(rect.Width()+8, rect.Height()+2))
+	rect := w.copyButton.FontMetrics().BoundingRect2("Copy")
+	w.copyButton.SetFixedSize(core.NewQSize2(rect.Width()+8, rect.Height()+2))
 
-	w.layout.AddWidget(w.button, 0, 0)
+	w.revealButton = widgets.NewQPushButton2("Reveal", nil)
+	w.revealButton.ConnectClicked(func(checked bool) {
+		w.text.SetText(value)
+		w.revealButton.Hide()
+	})
+	w.revealButton.ConnectPaintEvent(ignorePaints)
+	if !hidden {
+		w.revealButton.Hide()
+	}
+
+	rect = w.revealButton.FontMetrics().BoundingRect2("Reveal")
+	w.revealButton.SetFixedSize(core.NewQSize2(rect.Width()+8, rect.Height()+2))
+
+	w.layout.AddWidget(w.copyButton, 0, 0)
+	w.layout.AddWidget(w.revealButton, 0, 0)
 }
 
 func ignorePaints(e *gui.QPaintEvent) {}

@@ -94,8 +94,9 @@ func detailsData() ui.DetailsItem {
 			password = f.Value
 		} else {
 			detailsFields = append(detailsFields, ui.DetailsField{
-				Title: f.Name,
-				Value: f.Value,
+				Title:  f.Name,
+				Value:  f.Value,
+				Hidden: false,
 			})
 		}
 	}
@@ -104,9 +105,14 @@ func detailsData() ui.DetailsItem {
 	for _, s := range detailsItem.Details.Sections {
 		fields := make([]ui.DetailsField, 0)
 		for _, f := range s.Fields {
+			hidden := false
+			if f.Type == "concealed" {
+				hidden = true
+			}
 			fields = append(fields, ui.DetailsField{
-				Title: f.Title,
-				Value: f.Value,
+				Title:  f.Title,
+				Value:  f.Value,
+				Hidden: hidden,
 			})
 		}
 		sections = append(sections, ui.DetailsSection{
@@ -129,7 +135,7 @@ func detailsData() ui.DetailsItem {
 // fetchAndOpen
 func fetchAndOpen(row int) {
 	fetchDetails(filtered[row].UUID, func(item completeItem) {
-		// open and details will fetch data from getData
+		// after start, Details will get the data from detailsData
 		detailsItem = item
 		ui.App.Details.Start(item.Overview.Title)
 	})

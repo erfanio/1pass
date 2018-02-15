@@ -43,8 +43,9 @@ type DetailsSection struct {
 }
 
 type DetailsField struct {
-	Title string
-	Value string
+	Title  string
+	Value  string
+	Hidden bool
 }
 
 type DetailsUI struct {
@@ -69,13 +70,13 @@ func (w *DetailsUI) SetDataProvider(f func() DetailsItem) {
 	w.itemData = f
 }
 
-func (w *DetailsUI) makeText(value string) *TextField {
+func (w *DetailsUI) makeText(value string, hidden bool) *TextField {
 	text := NewTextField(w, 0)
-	text.SetText(value)
+	text.SetText(value, hidden)
 	return text
 }
 
-func (w *DetailsUI) createRow(key, value string) {
+func (w *DetailsUI) createRow(key, value string, hidden bool) {
 	row := w.layout.RowCount()
 	w.layout.AddWidget(
 		makeLabel(key, false),
@@ -84,7 +85,7 @@ func (w *DetailsUI) createRow(key, value string) {
 		core.Qt__AlignRight|core.Qt__AlignTop,
 	)
 	w.layout.AddWidget(
-		w.makeText(value),
+		w.makeText(value, hidden),
 		row,
 		1,
 		core.Qt__AlignLeft|core.Qt__AlignTop,
@@ -104,13 +105,13 @@ func (w *DetailsUI) start(title string) {
 
 	data := w.itemData()
 
-	w.createRow("Title", data.Title)
-	w.createRow("Username", data.Username)
-	w.createRow("Password", data.Password)
-	w.createRow("URL", data.URL)
-	w.createRow("Notes", data.Notes)
+	w.createRow("Title", data.Title, false)
+	w.createRow("Username", data.Username, false)
+	w.createRow("Password", data.Password, true)
+	w.createRow("URL", data.URL, false)
+	w.createRow("Notes", data.Notes, false)
 	for _, field := range data.Fields {
-		w.createRow(field.Title, field.Value)
+		w.createRow(field.Title, field.Value, field.Hidden)
 	}
 
 	for _, section := range data.Sections {
@@ -124,7 +125,7 @@ func (w *DetailsUI) start(title string) {
 			)
 
 			for _, field := range section.Fields {
-				w.createRow(field.Title, field.Value)
+				w.createRow(field.Title, field.Value, field.Hidden)
 			}
 		}
 	}

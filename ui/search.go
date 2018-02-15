@@ -160,7 +160,6 @@ func (w *SearchUI) init() {
 			w.textChanged(text)
 		}
 	})
-
 	// focus on input when enabled
 	w.input.ConnectChangeEvent(func(event *core.QEvent) {
 		if event.Type() == core.QEvent__EnabledChange {
@@ -168,6 +167,11 @@ func (w *SearchUI) init() {
 		} else {
 			w.input.ChangeEventDefault(event)
 		}
+	})
+	// don't let focus be anywhere but on input
+	// we need focus to capture arrow key/enter/esc/ctrl+c
+	w.input.ConnectFocusOutEvent(func(event *gui.QFocusEvent) {
+		w.input.SetFocus(core.Qt__NoFocusReason)
 	})
 
 	w.listModel.ConnectFlags(func(index *core.QModelIndex) core.Qt__ItemFlag {
@@ -228,19 +232,24 @@ func (w *SearchUI) SetTextChanged(f func(string)) {
 func (w *SearchUI) keyListener(event *gui.QKeyEvent) {
 	if event.Key() == int(core.Qt__Key_Escape) {
 		App.Quit()
+
 	} else if event.Key() == int(core.Qt__Key_Down) || event.Key() == int(core.Qt__Key_Up) {
+		// arrow key moves the selection in the list
 		row := w.list.CurrentIndex().Row()
 		if event.Key() == int(core.Qt__Key_Down) {
 			row += 1
 		} else if event.Key() == int(core.Qt__Key_Up) {
 			row -= 1
 		}
+
 		rowIndex := w.listModel.Index(row, 0, w.list.RootIndex())
 		// valid means the index isn't out of range
 		if rowIndex.IsValid() {
 			w.list.SetCurrentIndex(rowIndex)
 		}
+
 	} else if event.Key() == int(core.Qt__Key_C) && (event.Modifiers()&core.Qt__ControlModifier != 0) {
+		// ctrl+c = send copy command
 		indexes := w.list.SelectedIndexes()
 		if len(indexes) > 0 {
 			selected := indexes[0].Row()
@@ -292,10 +301,10 @@ func (w *SearchUI) paint(painter *gui.QPainter, option *widgets.QStyleOptionView
 
 	// fonts are measured to get the total height of the center area
 	titleFont := option.Font()
-	titleFont.SetPointSize(titleSize)
+	titleFont.SetPixelSize(titleSize)
 	titleFm := gui.NewQFontMetrics(titleFont)
 	subtitleFont := option.Font()
-	subtitleFont.SetPointSize(subtitleSize)
+	subtitleFont.SetPixelSize(subtitleSize)
 	subtitleFm := gui.NewQFontMetrics(subtitleFont)
 
 	rect := option.Rect()
