@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 )
@@ -16,6 +17,7 @@ type completeItem struct {
 	TemplateUUID string   `json:"templateUuid"`
 	Overview     overview `json:"overview"`
 	Details      details  `json:"details"`
+	RawJSON      string
 }
 
 type overview struct {
@@ -60,5 +62,8 @@ func json2item(rawData []byte) (item completeItem) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var pretty bytes.Buffer
+	json.Indent(&pretty, rawData, "", "  ")
+	item.RawJSON = pretty.String()
 	return
 }

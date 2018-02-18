@@ -36,6 +36,7 @@ type DetailsItem struct {
 	Notes    string
 	Sections []DetailsSection
 	Fields   []DetailsField
+	RawJSON  string
 }
 
 type DetailsSection struct {
@@ -96,6 +97,48 @@ func (w *DetailsUI) createRow(key, value string, hidden bool) {
 	)
 }
 
+func (w *DetailsUI) createSectionRow(section DetailsSection) {
+	if len(strings.TrimSpace(section.Title)) > 0 {
+		w.layout.AddWidget(
+			makeLabel(section.Title, true),
+			w.layout.RowCount(),
+			1,
+			core.Qt__AlignLeft,
+		)
+	}
+}
+
+func (w *DetailsUI) createJSONRow(json string) {
+	textEdit := widgets.NewQPlainTextEdit2(json, nil)
+	textEdit.Hide()
+
+	button := widgets.NewQPushButton2("Show JSON", nil)
+	button.ConnectClicked(func(checked bool) {
+		button.Hide()
+		textEdit.Show()
+	})
+
+	row := w.layout.RowCount()
+	w.layout.AddWidget(
+		makeLabel("JSON", false),
+		row,
+		0,
+		core.Qt__AlignRight|core.Qt__AlignTop,
+	)
+	w.layout.AddWidget(
+		textEdit,
+		row,
+		1,
+		core.Qt__AlignLeft|core.Qt__AlignTop,
+	)
+	w.layout.AddWidget(
+		button,
+		row,
+		1,
+		core.Qt__AlignLeft|core.Qt__AlignTop,
+	)
+}
+
 func (w *DetailsUI) start(title string) {
 	// remove all the old widgets
 	for w.layout.Count() > 0 {
@@ -120,20 +163,15 @@ func (w *DetailsUI) start(title string) {
 
 	for _, section := range data.Sections {
 		if !isSectionEmpty(section) {
-			if len(strings.TrimSpace(section.Title)) > 0 {
-				w.layout.AddWidget(
-					makeLabel(section.Title, true),
-					w.layout.RowCount(),
-					1,
-					core.Qt__AlignLeft,
-				)
-			}
+			w.createSectionRow(section)
 
 			for _, field := range section.Fields {
 				w.createRow(field.Title, field.Value, field.Hidden)
 			}
 		}
 	}
+
+	w.createJSONRow(data.RawJSON)
 
 	w.Open()
 }

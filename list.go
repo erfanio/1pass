@@ -129,6 +129,7 @@ func detailsData() ui.DetailsItem {
 		Password: password,
 		Fields:   detailsFields,
 		Sections: sections,
+		RawJSON:  detailsItem.RawJSON,
 	}
 }
 
