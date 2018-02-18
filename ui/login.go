@@ -87,12 +87,12 @@ func (w *LoginUI) init() {
 	w.layout.AddWidget(widgets.NewQLabel2("Secret Key", nil, core.Qt__Widget), 0, 0)
 	w.key = widgets.NewQLineEdit(nil)
 	w.key.SetFixedHeight(loginInputHeight)
+	w.key.SetEchoMode(widgets.QLineEdit__Password)
 	w.layout.AddWidget(w.key, 0, 0)
 
 	w.layout.AddWidget(widgets.NewQLabel2("Master Password", nil, core.Qt__Widget), 0, 0)
 	w.password = widgets.NewQLineEdit(nil)
 	w.password.SetFixedHeight(loginInputHeight)
-	// don't show the password
 	w.password.SetEchoMode(widgets.QLineEdit__Password)
 	w.layout.AddWidget(w.password, 0, 0)
 

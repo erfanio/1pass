@@ -42,7 +42,8 @@ func (w *TextField) init() {
 
 func (w *TextField) setText(value string, hidden bool) {
 	displayValue := value
-	if hidden {
+	// show if hidden and not empty
+	if hidden && len(value) > 0 {
 		displayValue = "••••••••••"
 	}
 	w.text = makeLabel(displayValue, false)
@@ -63,12 +64,18 @@ func (w *TextField) setText(value string, hidden bool) {
 		w.revealButton.Hide()
 	})
 	w.revealButton.ConnectPaintEvent(ignorePaints)
-	if !hidden {
-		w.revealButton.Hide()
-	}
 
 	rect = w.revealButton.FontMetrics().BoundingRect2("Reveal")
 	w.revealButton.SetFixedSize(core.NewQSize2(rect.Width()+8, rect.Height()+2))
+
+	if !hidden {
+		w.revealButton.Hide()
+	}
+	// don't show the buttons if empty
+	if len(value) == 0 {
+		w.copyButton.Hide()
+		w.revealButton.Hide()
+	}
 
 	w.layout.AddWidget(w.copyButton, 0, 0)
 	w.layout.AddWidget(w.revealButton, 0, 0)

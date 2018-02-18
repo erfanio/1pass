@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/widgets"
+	"strings"
 )
 
 const DetailsStyles = `
@@ -77,6 +78,9 @@ func (w *DetailsUI) makeText(value string, hidden bool) *TextField {
 }
 
 func (w *DetailsUI) createRow(key, value string, hidden bool) {
+	if len(strings.TrimSpace(value)) == 0 {
+		return
+	}
 	row := w.layout.RowCount()
 	w.layout.AddWidget(
 		makeLabel(key, false),
@@ -115,14 +119,15 @@ func (w *DetailsUI) start(title string) {
 	}
 
 	for _, section := range data.Sections {
-		// get rid of related items
-		if len(section.Fields) > 0 {
-			w.layout.AddWidget(
-				makeLabel(section.Title, true),
-				w.layout.RowCount(),
-				1,
-				core.Qt__AlignLeft,
-			)
+		if !isSectionEmpty(section) {
+			if len(strings.TrimSpace(section.Title)) > 0 {
+				w.layout.AddWidget(
+					makeLabel(section.Title, true),
+					w.layout.RowCount(),
+					1,
+					core.Qt__AlignLeft,
+				)
+			}
 
 			for _, field := range section.Fields {
 				w.createRow(field.Title, field.Value, field.Hidden)
@@ -131,4 +136,13 @@ func (w *DetailsUI) start(title string) {
 	}
 
 	w.Open()
+}
+
+func isSectionEmpty(section DetailsSection) bool {
+	for _, field := range section.Fields {
+		if len(strings.TrimSpace(field.Value)) > 0 {
+			return false
+		}
+	}
+	return true
 }
