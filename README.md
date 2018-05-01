@@ -9,8 +9,9 @@ This project is still work in progress, but essential parts are working now.
 ![Demo](https://thumbs.gfycat.com/SizzlingHonoredHamadryas-max-14mb.gif)
 
 After logging in, you're going to be remembered for 30min.  
-From the list you can press `ctrl-c` on an item to copy the password into your clipboard (if there is a password).  
-Pressing enter will open the item in details.
+You can navigate the list with your arrow keys.  
+Pressing `ctrl-c` on an item will copy the password into your clipboard (if there is a password).  
+Pressing `enter` will open the item in detail.
 
 # Build
 You need to install [qt](https://github.com/therecipe/qt/wiki/Installation) for go first.
