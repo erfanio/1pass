@@ -1,13 +1,15 @@
-This project is work in progress...
-
 # 1pass
 GUI for [1password cli](https://support.1password.com/command-line-getting-started/)  
 Since linux doesn't have a 1password client, this is a simple way to access passwords in 1password
+
+## Status
+This is by no mean a full featured 1password client, this is just a convenient way to access your 1password vault (potentially from a key binding).
+This project is still work in progress, but essential parts are working now.
+
+![Demo](https://i.imgur.com/f1HPCKg.gif)
 
 # Build
 You need to install [qt](https://github.com/therecipe/qt/wiki/Installation) for go first.
 You can find [building instructions](https://github.com/therecipe/qt/wiki/Getting-Started#starting-application) for qt applications too.
 Since custom constructor/signal is used, qtmoc needs to run before qtdeploy.
-
-NOTE: only tested on linux with qt5.8 and go1.9 atm
 
